@@ -1,0 +1,79 @@
+<div id="permanent-overlay">
+    <div class="overlay-section" id="artwork-section">
+        <p>Artwork</p>
+        <p id="artwork-info"></p>
+        <div class="action-buttons">
+            <button class="action-button" disabled onclick="CB_buy()">Buy print</button>
+            <button class="action-button" disabled onclick="CB_mint()"">Mint NFT</button>
+            <button class="action-button like-button" disabled onclick="CB_toggleLike()">&#x2764;</button>
+        </div>
+    </div>
+    <div class="overlay-section" id="navigation-section">
+        <p>Manual navigation</p>
+        <div class="nav-buttons">
+            <button class="nav-button" onclick="manual_move_backward()">&#x25C0;</button>
+            <button class="nav-button" onclick="manual_move_forward()">&#x25B6;</button>
+        </div>
+    </div>
+    <div class="overlay-section" id="help-section">
+        <button class="help-button" onclick="toggleHelp()">Help</button>
+    </div>
+</div>
+
+<div id="help-popup">
+    <div class="language-buttons">
+        <button class="lang-button active" onclick="changeLanguage('eng')">ENG</button>
+        <button class="lang-button" onclick="changeLanguage('spa')">SPA</button>
+        <button class="lang-button" onclick="changeLanguage('jap')">JAP</button>
+        <button class="lang-button" onclick="changeLanguage('cn')">CN</button>
+    </div>
+    
+    <div class="help-content">
+        <div class="help-text eng active">
+            You can move in the virtual environment in 3 different ways:
+            <br><br>1) You can use the arrow keys to move forward, backwards, left and right. You can drag the mouse to look up/down or spin;<br>
+            <img src="icons/keyboard_move.png" alt="Keyboard Movement" class="help-image ">
+            <img src="icons/keyboard_pan.png" alt="Keyboard Pan" class="help-image ">
+            <br><br>2) On a mobile device you can drag one finger to move forward and drag 2 fingers to spin;
+            <img src="icons/touch_move.png" alt="Touch Movement" class="help-image">
+            <img src="icons/touch_pan.png" alt="Touch Pan" class="help-image">
+            <br><br>3) You can use the manual navigation buttons once you are in a gallery.
+            <br><br>To go to a gallery click on the corresponding door.
+        </div>
+        <div class="help-text spa">
+            Puedes moverte en el entorno virtual de 3 formas diferentes:
+            <br><br>1) Puedes usar las teclas de flecha para moverte hacia adelante, atrás, izquierda y derecha. Puedes arrastrar el mouse para mirar arriba/abajo o girar;
+            <img src="icons/keyboard_move.png" alt="Keyboard Movement" class="help-image ">
+            <img src="icons/keyboard_pan.png" alt="Keyboard Pan" class="help-image ">
+            <br><br>2) En un dispositivo móvil puedes arrastrar un dedo para avanzar y arrastrar 2 dedos para girar;
+            <img src="icons/touch_move.png" alt="Touch Movement" class="help-image">
+            <img src="icons/touch_pan.png" alt="Touch Pan" class="help-image">
+            <br><br>3) Puedes usar los botones de navegación manual una vez que estés en una galería.
+            <br><br>Para ir a una galería, haz clic en la puerta correspondiente.
+        </div>
+        <div class="help-text jap">
+            仮想環境では3つの方法で移動できます：
+            <br><br>1) 矢印キーを使用して前後左右に移動できます。マウスをドラッグして上下を見たり回転したりできます；
+            <img src="icons/keyboard_move.png" alt="Keyboard Movement" class="help-image ">
+            <img src="icons/keyboard_pan.png" alt="Keyboard Pan" class="help-image ">
+            <br><br>2) モバイルデバイスでは、1本の指でドラッグして前進し、2本の指でドラッグして回転できます；
+            <img src="icons/touch_move.png" alt="Touch Movement" class="help-image">
+            <img src="icons/touch_pan.png" alt="Touch Pan" class="help-image">
+            <br><br>3) ギャラリー内では手動ナビゲーションボタンを使用できます。
+            <br><br>ギャラリーに行くには、対応するドアをクリックしてください。
+        </div>
+        <div class="help-text cn">
+            您可以通过3种不同的方式在虚拟环境中移动：
+            <br><br>1) 您可以使用方向键前后左右移动。您可以拖动鼠标来上下看或旋转；
+            <img src="icons/keyboard_move.png" alt="Keyboard Movement" class="help-image ">
+            <img src="icons/keyboard_pan.png" alt="Keyboard Pan" class="help-image ">
+            <br><br>2) 在移动设备上，您可以用一根手指拖动前进，用两根手指拖动旋转；
+            <img src="icons/touch_move.png" alt="Touch Movement" class="help-image">
+            <img src="icons/touch_pan.png" alt="Touch Pan" class="help-image">
+            <br><br>3) 在画廊中时，您可以使用手动导航按钮。
+            <br><br>要进入画廊，请点击相应的门。
+        </div>
+    </div>
+    
+    <button class="close-button" onclick="toggleHelp()">Close</button>
+</div>

@@ -145,15 +145,13 @@
 
 	<script>
 	// Preview mode detection - must run before declarations.js
+	// To use local templates/materials instead of CDN, set: window.openvgal_cdn_base = '';
 	(function() {
 		const urlParams = new URLSearchParams(window.location.search);
 		if (urlParams.get('preview') === 'iframe' && window.parent) {
 			window.openvgal_preview_mode = true;
 			window.openvgal_cdn_base = window.parent.openvgal_cdn_base || window.location.origin;
 			console.log('Preview mode: CDN base =', window.openvgal_cdn_base);
-		} else {
-			window.openvgal_preview_mode = false;
-			window.openvgal_cdn_base = '';
 		}
 	})();
 	</script>
@@ -287,12 +285,7 @@
 		var xhr = new XMLHttpRequest();
 		xhr.open('HEAD', urlToFile, false);
 		xhr.send();
-		 
-		if (xhr.status == "404") {
-			return false;
-		} else {
-			return true;
-		}
+		return xhr.status >= 200 && xhr.status < 300;
 	}
 	
 	window.initFunction = async function() {

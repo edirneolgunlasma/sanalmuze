@@ -4,6 +4,8 @@ function CB_artwork_picked(index) {
 	return function() {
 		manual_navigation_idx = index;
 		manual_move();
+		// Sanal müze: esere tıklayınca ayrıntı paneli açılır (muze-arayuz.js)
+		if (typeof window.eomEserAc === 'function') window.eomEserAc(manual_navigation_idx);
 	};
 }
 
@@ -46,7 +48,7 @@ function getArtworkPose(idx){
 	return {
 		position: camera_position,
 		target: target_position,
-		title: "Title:  " + gallery[dict_items[idx]]["metadata"],
+		title: String(gallery[dict_items[idx]]["metadata"] || "").replace(/^ID\s*#\d+\s*/, "").split("\n")[0],
 		idx: idx,
 		count: n_items
 	};
@@ -64,6 +66,7 @@ function manual_move(){
 	camera.setTarget(pose.target);
 
 	showInfoBox(pose.title);
+	if (typeof window.eomEserGuncelle === 'function') window.eomEserGuncelle(pose.idx);
 }
 
 function manual_move_backward(){
@@ -322,10 +325,11 @@ function loadOverlay() {
     const cdnBase = (typeof cdn_base !== 'undefined' && cdn_base) ? cdn_base : null;
     const cdnUrl = cdnBase ? cdnBase + '/core/overlay.html' : null;
 
-    const promise = cdnUrl
-        ? fetchText(cdnUrl).then(html => initOverlay(html, cdnBase + '/core/'))
-            .catch(() => fetchText('overlay.html').then(html => initOverlay(html)))
-        : fetchText('overlay.html').then(html => initOverlay(html));
+    // Sanal müze: Türkçeleştirilmiş yerel overlay.html önce; CDN yalnızca yedek.
+    const promise = fetchText('overlay.html').then(html => initOverlay(html))
+        .catch(() => cdnUrl
+            ? fetchText(cdnUrl).then(html => initOverlay(html, cdnBase + '/core/'))
+            : Promise.reject(new Error('overlay.html not found')));
 
     promise.catch(e => console.warn('Failed to load overlay:', e));
 }

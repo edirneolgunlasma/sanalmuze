@@ -1,3 +1,36 @@
+# Edirne Olgunlaşma Enstitüsü Sanal Müzesi
+
+Enstitü atölyelerinde üretilen eserlerin üç boyutlu sanal müzesi. [OpenVGAL](https://github.com/lbartworks/openvgal) (MIT) üzerine kuruludur; bu bölümün altındaki belge OpenVGAL'in özgün belgesidir.
+
+## Nasıl çalışır
+
+- **Eserler masaüstü uygulamasından gelir.** Envanter uygulamasında **🏛️ Sanal Müze** ekranında eserler seçilip **Seçilenleri Sanal Müzeye Gönder** ile yayına alınır (ya da tek tek, "Sergi Bilgileri" formundan). Site her açılışta Sanal Müze API'sinin `manifest` ucundan yalnızca **yayında** olan eserleri okur; `building_v2.json` kullanılmaz, eser eklemek için bu depoya dokunmak gerekmez.
+- **Her atölye bir salondur.** Eserler envanterdeki atölyeye göre gruplanır (Edirnekâri, Çini, İğne Oyası, El Dokuma…). Bir salona sığmayan atölye "Edirnekâri 2" gibi devam eder. Yerleşim OpenVGAL üreticisinin duvar paketleyicisiyle tarayıcıda yapılır.
+- **Giriş salonu** ortadaki tabelada Selimiye silueti ve "Edirne Olgunlaşma Enstitüsü · Sanal Müze" yazısını taşır (`site/materials/logo.png`); kapıların üzerinde atölye adları yazar. Açılışta enstitüyü tanıtan ve atölye salonlarını listeleyen bir karşılama kartı gösterilir.
+- **Esere tıklanınca** sağda (telefonda alttan) hikaye, künye ve büyük görsel açılır; görsele tıklayınca 2048 px'lik hali tam ekran açılır.
+- Sergi metinleri `?dil=en` (tr, en, de, bg, ar) ile başka dilde gösterilebilir; o dilde metni olmayan eser Türkçe görünür.
+
+## Kurulum
+
+1. Masaüstü uygulaması → **Sanal Müze → Yayın & API → Yeni Anahtar** ile bu site için ayrı bir anahtar üretin (örn. "Sanal müze sitesi").
+2. Anahtarı `site/muze-ayar.js` içindeki `apiAnahtari` alanına yazın. Sayfa herkese açık olduğu için anahtar da görünür; anahtar salt-okunurdur ve yalnızca zaten yayında olan eserleri döndürür. Sızarsa uygulamadan silip yenisini yazmanız yeter.
+3. Yayın: `gh-pages` dalı `site/` klasörünün kopyasıdır. Depo yöneticisi bir kez **Settings → Pages → Build and deployment → Deploy from a branch → `gh-pages` / `(root)`** seçer; site `https://edirneolgunlasma.github.io/sanalmuze/` adresinde açılır. `site/` altında bir şey değiştiğinde dalı güncellemek için: `git subtree push --prefix site origin gh-pages`. Eser eklemek/çıkarmak için bu gerekmez; sergi her açılışta API'den gelir.
+4. Yerelde denemek için: `cd site && python3 -m http.server 8080` → <http://localhost:8080>
+
+## Bu depoda OpenVGAL'e eklenenler
+
+| Dosya | Görev |
+| --- | --- |
+| `site/muze-ayar.js` | API adresi, anahtar, dil ve salon görünümü |
+| `site/entegre.js` | Manifesti alır, atölyelere göre salonları kurar, hata ekranları |
+| `site/muze-arayuz.js`, `site/muze-arayuz.css` | Karşılama kartı, salon rozeti, eser paneli, büyük görsel |
+| `site/materials/logo.png` | Giriş salonundaki Edirne temalı tabela |
+| `site/openvgal-viewer.js` | `building_v2.json` yerine `window.eomSergiHazirla()` kancası |
+| `site/room_builder_aux.js` | Kapı yazıları: "Ana Salon"; 3B yazı tipinde olmayan ş/ğ/İ temel harfe düşer |
+| `site/overlay.js`, `site/overlay.html` | Türkçe denetimler, esere tıklayınca panel, etiketler varsayılan açık |
+
+---
+
 <img width="1232" height="842" alt="image" src="https://github.com/user-attachments/assets/1cba2f50-cf57-41e7-9259-95a0ca4bd6c8" />
 
 

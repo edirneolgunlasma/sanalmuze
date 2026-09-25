@@ -635,6 +635,9 @@
 				console.warn('Preview: no blob URL for', resourcePath);
 				return hallspics_prefix + resourcePath;
 			};
+		} else if (typeof window.eomSergiHazirla === 'function') {
+			// Sanal müze: sergi building_v2.json yerine envanter API'sinden kurulur (entegre.js)
+			config_file_content = await window.eomSergiHazirla();
 		} else {
 			let response = await fetch (config_file_name);
 			config_file_content = await response.json();

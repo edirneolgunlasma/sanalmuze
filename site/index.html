@@ -1,37 +1,37 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="tr">
  <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Edirne Olgunlasma Enstitusu Sanal Müzesi</title>
-	<meta name="description" content="Explore a stunning 3D virtual tour of your art gallery. Experience interactive WebGL visuals with OpenVGal immersive 3D environment.">
-	<meta name="keywords" content="3D virtual gallery, WebGL environment, interactive 3D model, 3D virtual photo gallery, 3D virtual art gallery">
+	<title>Edirne Olgunlaşma Enstitüsü Sanal Müzesi</title>
+	<meta name="description" content="Edirne Olgunlaşma Enstitüsü atölyelerinde üretilen el sanatı eserlerini üç boyutlu sanal müze salonlarında gezin: Edirnekâri, çini, iğne oyası, el dokuma ve daha fazlası.">
+	<meta name="keywords" content="Edirne Olgunlaşma Enstitüsü, sanal müze, Edirnekâri, çini, iğne oyası, el sanatları, Edirne">
 	<meta name="robots" content="index, follow">
 	<!-- No static canonical or og:url. This file ships in self-host ZIPs and as
 	     cdn.openvgal.com/core/viewer.html, so its real address is only known at
 	     runtime. Both tags are created further down, and only when
 	     window.openvgal_location is an absolute https URL. -->
 	<!-- Open Graph -->
-	<meta property="og:title" content="Interactive 3D Virtual Gallery | OpenVGAL">
-	<meta property="og:description" content="Step into a fully immersive 3D environment. Explore our WebGL-powered virtual tour of an art gallery.">
+	<meta property="og:title" content="Edirne Olgunlaşma Enstitüsü Sanal Müzesi">
+	<meta property="og:description" content="Enstitü atölyelerinde üretilen eserleri üç boyutlu salonlarda gezin.">
 	<meta property="og:image" content="preview.jpg">
 	<meta property="og:type" content="website">
 	<!-- Twitter Card -->
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="3D Virtual Gallery | OpenVGAL">
-	<meta name="twitter:description" content="Experience an interactive 3D virtual gallery powered by WebGL. Explore now!">
+	<meta name="twitter:title" content="Edirne Olgunlaşma Enstitüsü Sanal Müzesi">
+	<meta name="twitter:description" content="Enstitü atölyelerinde üretilen eserleri üç boyutlu salonlarda gezin.">
 	<meta name="twitter:image" content="preview.jpg">
 	<!-- Structured Data -->
 	<script type="application/ld+json">
 	{
 		"@context": "https://schema.org",
 		"@type": "VirtualTour",
-		"name": "3D Virtual Gallery",
-		"description": "An interactive WebGL-based 3D virtual gallery by OpenVGAL.",
+		"name": "Edirne Olgunlaşma Enstitüsü Sanal Müzesi",
+		"description": "Edirne Olgunlaşma Enstitüsü atölyelerinde üretilen eserlerin üç boyutlu sanal müzesi.",
 		"image": "preview.jpg",
 		"provider": {
 		"@type": "Organization",
-		"name": "OpenVGAL"
+		"name": "Edirne Olgunlaşma Enstitüsü"
 		}
 	}
 	</script>
@@ -430,6 +430,7 @@
 	-->
 	<script src="https://unpkg.com/earcut@2.1.1/dist/earcut.min.js"></script>
     <link rel="stylesheet" href="overlay.css">
+    <link rel="stylesheet" href="muze-arayuz.css">
 
 	<script>
 	// URL-based mode overrides - must run before declarations.js
@@ -527,22 +528,24 @@
   
   	<div id="loader">
 	  <div class="loader-card">
-		<p>Loading template</p>
+		<p class="eom-ust-baslik">Edirne Olgunlaşma Enstitüsü · Sanal Müze</p>
+		<p id="eom-yukleme-durum" role="status">Sergi hazırlanıyor…</p>
+		<p>Salon</p>
 		<div class="loadingContainer">
 			<div class="loadingBar" id="loadingBar_template"></div>
 		</div>
 		<p class="percent-text" id="percentLoaded_template">0%</p>
-		<p>Loading materials</p>
+		<p>Malzemeler</p>
 		<div class="loadingContainer">
 			<div class="loadingBar" id="loadingBar_materials"></div>
 		</div>
 		<p class="percent-text" id="percentLoaded_materials">0%</p>
-		<p>Loading artworks</p>
+		<p>Eserler</p>
 		<div class="loadingContainer">
 			<div class="loadingBar" id="loadingBar_artwork"></div>
 		</div>
 		<p class="percent-text" id="percentLoaded_artwork">0%</p>
-		<p>Setting up lights</p>
+		<p>Işıklandırma</p>
 		<div class="loadingContainer">
 			<div class="loadingBar" id="loadingBar_lights"></div>
 		</div>
@@ -552,6 +555,9 @@
 
 
     <script src='declarations.js'></script>
+    <!-- Sanal müze: sergi building_v2.json yerine envanter API'sinden kurulur -->
+    <script src="muze-ayar.js"></script>
+    <script src="js/gallery-generator.js"></script>
     <script src="entegre.js"></script>
   
       
@@ -577,7 +583,7 @@
     <script src='openvgal-viewer.js'></script>
 
     <!-- Navigation Map -->
-    <button id="map-button" onclick="toggleMap()" title="Gallery Map" style="display:none;">
+    <button id="map-button" onclick="toggleMap()" title="Müze haritası" aria-label="Müze haritası" style="display:none;">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="7" height="7" rx="1"/>
@@ -589,7 +595,7 @@
 
     <div id="map-modal">
         <div id="map-header">
-            <span id="map-title">Galeri Haritası</span>
+            <span id="map-title">Müze Haritası</span>
             <button id="map-close" onclick="toggleMap()">&times;</button>
         </div>
         <div id="map-grid"></div>
@@ -655,12 +661,13 @@
 
             var nameEl = document.createElement('p');
             nameEl.className = 'map-card-name';
-            nameEl.textContent = galleryName === 'root' ? 'Main Hall' : galleryName.replace(/#/g, ' ');
+            var hub = /^root(?:#(\d+))?$/.exec(galleryName);
+            nameEl.textContent = hub ? (hub[1] ? 'Ana Salon ' + (Number(hub[1]) + 1) : 'Ana Salon') : galleryName.replace(/#/g, ' ');
             info.appendChild(nameEl);
 
             var countEl = document.createElement('p');
             countEl.className = 'map-card-count';
-            countEl.textContent = imageKeys.length + (imageKeys.length === 1 ? ' artwork' : ' artworks');
+            countEl.textContent = hub ? 'Giriş' : imageKeys.length + ' eser';
             info.appendChild(countEl);
 
             card.appendChild(info);
@@ -702,5 +709,96 @@
         }
     })();
     </script>
+
+    <!-- Sanal müze arayüzü (muze-arayuz.js) -->
+    <div id="eom-giris" hidden role="dialog" aria-modal="true" aria-labelledby="eom-giris-baslik">
+      <div class="eom-giris-kart">
+        <svg class="eom-selimiye" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 128" fill="currentColor" role="img" aria-label="Edirne Selimiye Camii silueti">
+          <defs>
+            <g id="eom-minare">
+              <rect x="-2.2" y="22" width="4.4" height="96"/>
+              <rect x="-4.6" y="44" width="9.2" height="2.2" rx="0.8"/>
+              <rect x="-4.6" y="60" width="9.2" height="2.2" rx="0.8"/>
+              <rect x="-4.6" y="76" width="9.2" height="2.2" rx="0.8"/>
+              <polygon points="-3,22.6 3,22.6 0,5"/>
+              <rect x="-0.4" y="0.5" width="0.8" height="5"/>
+            </g>
+            <mask id="eom-pencere">
+              <rect width="320" height="128" fill="#fff"/>
+              <g fill="#000">
+                <path d="M131 86v-4a2 2 0 0 1 4 0v4z M141 86v-4a2 2 0 0 1 4 0v4z M151 86v-4a2 2 0 0 1 4 0v4z M165 86v-4a2 2 0 0 1 4 0v4z M175 86v-4a2 2 0 0 1 4 0v4z M185 86v-4a2 2 0 0 1 4 0v4z"/>
+                <path d="M116 112v-6a2.5 2.5 0 0 1 5 0v6z M130 112v-6a2.5 2.5 0 0 1 5 0v6z M144 112v-6a2.5 2.5 0 0 1 5 0v6z M171 112v-6a2.5 2.5 0 0 1 5 0v6z M185 112v-6a2.5 2.5 0 0 1 5 0v6z M199 112v-6a2.5 2.5 0 0 1 5 0v6z"/>
+                <path d="M156 118v-11a4 4 0 0 1 8 0v11z"/>
+              </g>
+            </mask>
+          </defs>
+          <use href="#eom-minare" x="72"/>
+          <use href="#eom-minare" x="94"/>
+          <use href="#eom-minare" x="226"/>
+          <use href="#eom-minare" x="248"/>
+          <g mask="url(#eom-pencere)">
+            <rect x="104" y="98" width="112" height="20"/>
+            <rect x="109" y="93" width="102" height="6" rx="1.5"/>
+            <rect x="124" y="78" width="72" height="16"/>
+            <path d="M118 79 C118 58, 138 47, 160 47 C182 47, 202 58, 202 79 Z"/>
+          </g>
+          <rect x="114" y="82" width="8" height="12"/>
+          <path d="M114 82.5a4 4 0 0 1 8 0z"/>
+          <rect x="198" y="82" width="8" height="12"/>
+          <path d="M198 82.5a4 4 0 0 1 8 0z"/>
+          <path d="M105 93.5a6 5 0 0 1 12 0z"/>
+          <path d="M203 93.5a6 5 0 0 1 12 0z"/>
+          <rect x="159.3" y="36" width="1.4" height="12"/>
+          <circle cx="160" cy="36.5" r="1.9"/>
+          <rect x="44" y="118" width="232" height="2" rx="1"/>
+        </svg>
+        <p class="eom-ust-baslik">Edirne · Sanal Müze</p>
+        <h1 id="eom-giris-baslik">Edirne Olgunlaşma Enstitüsü<span>Sanal Müzesi</span></h1>
+        <div class="eom-lale-bolucu"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-16 -14 32 30" fill="currentColor" aria-hidden="true">  <path d="M0-13C4.5-8.5 5.2-2.5 0 4C-5.2-2.5-4.5-8.5 0-13Z"/>  <path d="M0 4C-8 2.5-11-5-8-11.5C-6.2-5.5-3.6-1.4 0 4Z"/>  <path d="M0 4C8 2.5 11-5 8-11.5C6.2-5.5 3.6-1.4 0 4Z"/>  <rect x="-0.6" y="3.5" width="1.2" height="11"/>  <path d="M0 12C-3 8-7 7.5-10 8.5C-7 10.5-3.5 11.5 0 12Z"/>  <path d="M0 10C3 6.5 7 6 10 7C7 9 3.5 10 0 10Z"/></svg></div>
+        <p class="eom-giris-metin">Selimiye'nin şehrinde, enstitümüzün atölyelerinde ustalarımızın elinden çıkan eserleri üç boyutlu salonlarda gezin. Her atölyenin kendi salonu var; salonlara giriş salonundaki kapılardan geçilir. Bir esere tıkladığınızda hikayesi, künyesi ve büyük görseli açılır.</p>
+        <p class="eom-giris-sayi" id="eom-giris-sayi"></p>
+        <ul class="eom-atolyeler" id="eom-atolyeler" aria-label="Atölye salonları"></ul>
+        <button class="eom-dugme" id="eom-giris-kapat" type="button">Müzeyi Gez</button>
+      </div>
+    </div>
+
+    <button id="eom-oda-rozeti" type="button" hidden aria-label="Müze tanıtımı ve atölye salonları">
+      <span class="eom-ust-baslik">Edirne Olgunlaşma Enstitüsü</span>
+      <strong id="eom-oda-adi">Ana Salon</strong>
+    </button>
+
+    <aside id="eom-eser-panel" aria-labelledby="eom-eser-baslik" aria-hidden="true">
+      <button class="eom-kapat" id="eom-panel-kapat" type="button" aria-label="Kapat">&times;</button>
+      <div class="eom-panel-kaydir" id="eom-panel-kaydir">
+        <figure class="eom-gorsel">
+          <button type="button" id="eom-gorsel-buyut" aria-label="Görseli büyüt"><img id="eom-gorsel-img" alt=""></button>
+          <figcaption>Büyütmek için tıklayın</figcaption>
+        </figure>
+        <div class="eom-kucukler" id="eom-kucukler" hidden></div>
+        <div class="eom-icerik">
+          <p class="eom-ust-baslik" id="eom-eser-atolye"></p>
+          <h2 id="eom-eser-baslik"></h2>
+          <p class="eom-ozet" id="eom-eser-ozet" hidden></p>
+          <div class="eom-hikaye" id="eom-eser-hikaye"></div>
+          <h3>Künye</h3>
+          <dl class="eom-kunye" id="eom-eser-kunye"></dl>
+          <p class="eom-lisans" id="eom-eser-lisans"></p>
+          <a class="eom-sanal-tur" id="eom-eser-tur" target="_blank" rel="noopener" hidden>Sanal turu aç ↗</a>
+        </div>
+      </div>
+      <nav class="eom-panel-alt" aria-label="Salondaki eserler">
+        <button type="button" id="eom-onceki">◀ Önceki</button>
+        <span id="eom-sira"></span>
+        <button type="button" id="eom-sonraki">Sonraki ▶</button>
+      </nav>
+    </aside>
+
+    <div id="eom-buyuk" hidden role="dialog" aria-modal="true" aria-label="Büyük görsel">
+      <button class="eom-kapat" type="button" aria-label="Kapat">&times;</button>
+      <img alt="">
+      <p>Yakınlaştırmak için görsele tıklayın · Kapatmak için Esc</p>
+    </div>
+
+    <script src="muze-arayuz.js"></script>
   </body>
 </html>

@@ -1,0 +1,503 @@
+/* Edirne Olgunlaşma Enstitüsü Sanal Müzesi — giriş kartı, salon rozeti, eser paneli */
+
+:root {
+  --eom-zemin: #14110d;
+  --eom-yuzey: #1d1913;
+  --eom-yuzey-2: #262017;
+  --eom-metin: #f3ece0;
+  --eom-soluk: #b9ad9a;
+  --eom-altin: #c9a45c;
+  --eom-altin-acik: #e2c889;
+  --eom-cizgi: rgba(201, 164, 92, 0.28);
+  --eom-golge: 0 24px 60px rgba(0, 0, 0, 0.55);
+  --eom-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+  --eom-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* --- Yükleme ekranı durumu --- */
+#eom-yukleme-durum {
+  margin: 0 0 0.9rem;
+  font-family: var(--eom-sans);
+  font-size: 0.85rem;
+  color: var(--eom-altin-acik);
+  min-height: 1.2em;
+}
+
+/* --- Ortak --- */
+.eom-ust-baslik {
+  margin: 0;
+  font-family: var(--eom-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--eom-altin);
+}
+
+.eom-dugme {
+  appearance: none;
+  border: 1px solid var(--eom-altin);
+  background: var(--eom-altin);
+  color: #1a140a;
+  font: 600 0.95rem/1 var(--eom-sans);
+  padding: 0.85rem 1.6rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.eom-dugme:hover { background: var(--eom-altin-acik); }
+.eom-dugme:focus-visible { outline: 2px solid var(--eom-altin-acik); outline-offset: 3px; }
+
+.eom-lale-bolucu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  color: var(--eom-altin);
+  margin: 0.9rem auto;
+  max-width: 320px;
+}
+.eom-lale-bolucu::before,
+.eom-lale-bolucu::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--eom-cizgi) 30%, var(--eom-altin));
+}
+.eom-lale-bolucu::after { transform: scaleX(-1); }
+.eom-lale-bolucu svg { width: 22px; height: 22px; flex: 0 0 auto; }
+
+/* --- Giriş kartı --- */
+#eom-giris {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(10, 8, 5, 0.74);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  overflow-y: auto;
+}
+#eom-giris[hidden] { display: none; }
+
+.eom-giris-kart {
+  position: relative;
+  width: 100%;
+  max-width: 620px;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: 2.2rem 2.4rem 2rem;
+  text-align: center;
+  color: var(--eom-metin);
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(201, 164, 92, 0.12), transparent 60%),
+    var(--eom-zemin);
+  border: 1px solid var(--eom-cizgi);
+  border-radius: 18px;
+  box-shadow: var(--eom-golge);
+}
+/* Edirnekâri pano çerçevesi: dış çizginin içinde ikinci ince çizgi */
+.eom-giris-kart::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(201, 164, 92, 0.16);
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+.eom-selimiye {
+  display: block;
+  width: min(300px, 70%);
+  height: auto;
+  margin: 0 auto 1.1rem;
+  color: var(--eom-altin);
+}
+
+.eom-giris-kart h1 {
+  margin: 0.45rem 0 0;
+  font-family: var(--eom-serif);
+  font-weight: 600;
+  font-size: clamp(1.7rem, 5vw, 2.35rem);
+  line-height: 1.12;
+  letter-spacing: 0.01em;
+  color: var(--eom-metin);
+}
+.eom-giris-kart h1 span {
+  display: block;
+  font-weight: 400;
+  font-size: 0.62em;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--eom-altin-acik);
+  margin-top: 0.45rem;
+}
+
+.eom-giris-metin {
+  margin: 0 auto;
+  max-width: 48ch;
+  font-family: var(--eom-sans);
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: var(--eom-soluk);
+}
+
+.eom-giris-sayi {
+  margin: 1.1rem 0 0.7rem;
+  font-family: var(--eom-sans);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--eom-altin);
+}
+
+.eom-atolyeler {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+}
+.eom-atolyeler button {
+  appearance: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--eom-cizgi);
+  border-radius: 999px;
+  background: var(--eom-yuzey);
+  color: var(--eom-metin);
+  font: 500 0.86rem/1.2 var(--eom-sans);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.eom-atolyeler button:hover { border-color: var(--eom-altin); background: var(--eom-yuzey-2); }
+.eom-atolyeler button:focus-visible { outline: 2px solid var(--eom-altin-acik); outline-offset: 2px; }
+.eom-atolyeler small { color: var(--eom-altin); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+
+/* --- Salon rozeti (sol üst, harita düğmesinin yanında) --- */
+#eom-oda-rozeti {
+  position: fixed;
+  top: 20px;
+  left: 76px;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: calc(100vw - 96px);
+  padding: 0.5rem 0.95rem 0.55rem;
+  border: 1px solid var(--eom-cizgi);
+  border-radius: 14px;
+  background: rgba(14, 11, 8, 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--eom-metin);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+#eom-oda-rozeti[hidden] { display: none; }
+#eom-oda-rozeti .eom-ust-baslik { font-size: 0.62rem; }
+#eom-oda-rozeti strong {
+  font-family: var(--eom-serif);
+  font-size: 1.05rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#eom-oda-rozeti:focus-visible { outline: 2px solid var(--eom-altin-acik); outline-offset: 2px; }
+
+/* --- Eser ayrıntı paneli --- */
+#eom-eser-panel {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 40;
+  width: min(420px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  color: var(--eom-metin);
+  background: rgba(20, 17, 13, 0.97);
+  border: 1px solid var(--eom-cizgi);
+  border-radius: 16px;
+  box-shadow: var(--eom-golge);
+  overflow: hidden;
+  transform: translateX(calc(100% + 24px));
+  transition: transform 0.28s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+#eom-eser-panel.acik { transform: none; }
+#eom-eser-panel:not(.acik) { visibility: hidden; transition: transform 0.28s ease, visibility 0s 0.28s; }
+
+.eom-panel-kaydir {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.eom-kapat {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(10, 8, 6, 0.7);
+  color: var(--eom-metin);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.eom-kapat:hover { border-color: var(--eom-altin); }
+.eom-kapat:focus-visible { outline: 2px solid var(--eom-altin-acik); outline-offset: 2px; }
+
+.eom-gorsel {
+  position: relative;
+  margin: 0;
+  background: #0b0906;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.eom-gorsel button {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: none;
+  cursor: zoom-in;
+}
+.eom-gorsel img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.eom-gorsel figcaption {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(10, 8, 6, 0.72);
+  font: 500 0.72rem/1.2 var(--eom-sans);
+  color: var(--eom-soluk);
+  pointer-events: none;
+}
+
+.eom-kucukler {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px 0;
+  overflow-x: auto;
+}
+.eom-kucukler button {
+  flex: 0 0 auto;
+  width: 54px;
+  height: 54px;
+  padding: 0;
+  border: 1px solid var(--eom-cizgi);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #0b0906;
+  cursor: pointer;
+  opacity: 0.65;
+}
+.eom-kucukler button[aria-current="true"] { opacity: 1; border-color: var(--eom-altin); }
+.eom-kucukler img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.eom-icerik { padding: 1.1rem 1.35rem 1.4rem; }
+.eom-icerik h2 {
+  margin: 0.35rem 0 0.55rem;
+  font-family: var(--eom-serif);
+  font-weight: 600;
+  font-size: 1.55rem;
+  line-height: 1.18;
+}
+.eom-ozet {
+  margin: 0 0 0.9rem;
+  font-family: var(--eom-sans);
+  font-size: 0.98rem;
+  line-height: 1.5;
+  color: var(--eom-altin-acik);
+}
+.eom-hikaye p {
+  margin: 0 0 0.8rem;
+  font-family: var(--eom-sans);
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: #ddd3c3;
+}
+
+.eom-icerik h3 {
+  margin: 1.3rem 0 0.5rem;
+  font-family: var(--eom-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--eom-altin);
+}
+
+.eom-kunye {
+  display: grid;
+  grid-template-columns: minmax(96px, auto) 1fr;
+  margin: 0;
+  border-top: 1px solid var(--eom-cizgi);
+  font-family: var(--eom-sans);
+  font-size: 0.88rem;
+}
+.eom-kunye dt,
+.eom-kunye dd {
+  margin: 0;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(201, 164, 92, 0.12);
+}
+.eom-kunye dt { color: var(--eom-soluk); padding-right: 0.8rem; }
+.eom-kunye dd { color: var(--eom-metin); overflow-wrap: anywhere; }
+.eom-renk {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  margin-right: 0.4em;
+  border-radius: 3px;
+  vertical-align: -0.1em;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.eom-lisans {
+  margin: 1rem 0 0;
+  font: 0.78rem/1.5 var(--eom-sans);
+  color: var(--eom-soluk);
+}
+/* display kuralları hidden özniteliğini ezmesin */
+#eom-eser-panel [hidden] { display: none; }
+
+.eom-sanal-tur {
+  display: inline-block;
+  margin-top: 0.9rem;
+  color: var(--eom-altin-acik);
+  font: 600 0.9rem/1.3 var(--eom-sans);
+}
+
+.eom-panel-alt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.7rem 0.9rem;
+  border-top: 1px solid var(--eom-cizgi);
+  background: var(--eom-yuzey);
+  font: 500 0.82rem/1 var(--eom-sans);
+  color: var(--eom-soluk);
+}
+.eom-panel-alt button {
+  appearance: none;
+  border: 1px solid var(--eom-cizgi);
+  background: transparent;
+  color: var(--eom-metin);
+  font: 500 0.85rem/1 var(--eom-sans);
+  padding: 0.6rem 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.eom-panel-alt button:hover { border-color: var(--eom-altin); }
+.eom-panel-alt button:focus-visible { outline: 2px solid var(--eom-altin-acik); outline-offset: 2px; }
+.eom-panel-alt span { font-variant-numeric: tabular-nums; }
+
+/* --- Büyük görsel --- */
+#eom-buyuk {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 5, 3, 0.94);
+  cursor: zoom-out;
+}
+#eom-buyuk[hidden] { display: none; }
+#eom-buyuk img {
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 32px);
+  object-fit: contain;
+  box-shadow: var(--eom-golge);
+}
+#eom-buyuk.yakin { overflow: auto; align-items: flex-start; justify-content: flex-start; }
+#eom-buyuk.yakin img { max-width: none; max-height: none; cursor: zoom-out; }
+#eom-buyuk .eom-kapat { position: fixed; top: 16px; right: 16px; }
+#eom-buyuk p {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(10, 8, 6, 0.8);
+  font: 0.78rem/1.3 var(--eom-sans);
+  color: var(--eom-soluk);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* --- Hata kartı --- */
+#eom-hata {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--eom-zemin);
+}
+.eom-hata-kart {
+  max-width: 520px;
+  text-align: center;
+  color: var(--eom-metin);
+  font-family: var(--eom-sans);
+}
+.eom-hata-kart h1 {
+  margin: 0.6rem 0 0.7rem;
+  font-family: var(--eom-serif);
+  font-weight: 600;
+  font-size: 1.9rem;
+}
+.eom-hata-kart p:not(.eom-ust-baslik) { margin: 0 0 1.4rem; line-height: 1.6; color: var(--eom-soluk); }
+
+/* --- Telefon: panel alttan açılan sayfa olur --- */
+@media (max-width: 700px) {
+  #eom-oda-rozeti { top: 12px; left: 64px; padding: 0.4rem 0.75rem; }
+  #eom-oda-rozeti strong { font-size: 0.95rem; }
+
+  #eom-eser-panel {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-height: 82dvh;
+    border-radius: 16px 16px 0 0;
+    border-bottom: 0;
+    transform: translateY(100%);
+  }
+  #eom-eser-panel.acik { transform: none; }
+  .eom-gorsel { aspect-ratio: 16 / 10; }
+  .eom-giris-kart { padding: 1.8rem 1.25rem 1.5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #eom-eser-panel, #eom-eser-panel:not(.acik) { transition: none; }
+}

@@ -1,8 +1,9 @@
 // Sanal müze ↔ envanter köprüsü.
 //
 // Masaüstü uygulamasında "Yayında" olan eserler Sanal Müze API'sinin manifest
-// ucundan alınır, atölyelerine göre gruplanır ve her atölye bir salon olur
-// (sığmayanlar "Çini 2", "Çini 3" diye devam eder). Yerleşim, OpenVGAL
+// ucundan alınır, koleksiyonlarına göre gruplanır ve her koleksiyon bir salon olur
+// (sığmayanlar "Selimiye Esintileri 2" diye devam eder). Salon sırası ve
+// açıklaması uygulamadaki Koleksiyonlar sekmesinden gelir. Yerleşim, OpenVGAL
 // üreticisinin duvar paketleyicisiyle (js/gallery-generator.js → packIntoRooms)
 // tarayıcıda yapılır; building_v2.json dosyasına gerek kalmaz.
 //
@@ -13,7 +14,8 @@
 
   const AYAR = window.EOM_MUZE || {};
   const DILLER = ['tr', 'en', 'de', 'bg', 'ar'];
-  const OLCU_ESZAMANLI = 12;       // aynı anda ölçülen küçük görsel
+  const OLCU_ESZAMANLI = 8;        // aynı anda ölçülen küçük görsel
+  const OLCU_ONBELLEK = 'eom-gorsel-olculeri-v1';
   const OLCU_ZAMAN_ASIMI = 15000;
   const API_ZAMAN_ASIMI = 60000;   // Apps Script soğuk açılışta 10+ sn sürebilir
 
@@ -36,7 +38,7 @@
     return DILLER.includes(dil) ? dil : 'tr';
   }
 
-  // "Edirnekari" ile "Edirnekâri" aynı salondur. Masaüstündeki muzeAtolyeAnahtari() ile aynı kural.
+  // Büyük/küçük harf ve şapka farkı aynı salondur ("Edirnekari" = "Edirnekâri").
   function odaAnahtari(ad) {
     return String(ad || '').trim().toLocaleLowerCase('tr')
       .replace(/â/g, 'a').replace(/î/g, 'i').replace(/û/g, 'u').replace(/\s+/g, ' ');
@@ -96,7 +98,25 @@
     return g.kaynak === 'drive' && g.id ? 'https://lh3.googleusercontent.com/d/' + g.id + '=s1024' : (g.buyuk || g.tamBoy);
   }
 
+  // Görsel oranları tarayıcıda saklanır: tekrar gelen ziyaretçi yüzlerce küçük
+  // görseli yeniden indirmez. Anahtar görsel adresidir; görsel değişirse adres de değişir.
+  let olcuOnbellegi = {};
+  try { olcuOnbellegi = JSON.parse(localStorage.getItem(OLCU_ONBELLEK) || '{}') || {}; } catch (e) { olcuOnbellegi = {}; }
+  function olcuOnbelleginiYaz() {
+    try { localStorage.setItem(OLCU_ONBELLEK, JSON.stringify(olcuOnbellegi)); } catch (e) { /* özel pencere vb. */ }
+  }
+
   function gorselOlcusu(eser) {
+    const anahtar = kucukAdres(eser.gorseller[0]);
+    const kayitli = olcuOnbellegi[anahtar];
+    if (kayitli && kayitli.w > 0 && kayitli.h > 0) return Promise.resolve(kayitli);
+    return olcuIndir(eser).then((o) => {
+      if (!o.tahmini) olcuOnbellegi[anahtar] = { w: o.w, h: o.h };
+      return o;
+    });
+  }
+
+  function olcuIndir(eser) {
     return new Promise((coz) => {
       const img = new Image();
       let bitti = false;
@@ -104,7 +124,7 @@
         if (bitti) return;
         bitti = true;
         clearTimeout(zamanlayici);
-        coz(w > 0 && h > 0 ? { w: w, h: h } : { w: 4, h: 3 });
+        coz(w > 0 && h > 0 ? { w: w, h: h } : { w: 4, h: 3, tahmini: true });
       };
       const zamanlayici = setTimeout(() => bitir(0, 0), OLCU_ZAMAN_ASIMI);
       img.onload = () => bitir(img.naturalWidth, img.naturalHeight);
@@ -132,11 +152,14 @@
     return String((eser.icerik && eser.icerik.baslik) || (eser.kunye && eser.kunye.eserAdi) || eser.envanterNo).trim();
   }
 
-  // Duvardaki etiket: "Başlık\nAlt satır" (plaque_builder ilk satırı başlık yapar).
+  // Duvardaki etiket yalnızca eserin adını taşır (plaque_builder).
   function etiket(eser) {
-    const k = eser.kunye || {};
-    const alt = [k.teknik, k.malzeme].filter(Boolean).join(' · ') || eser.envanterNo;
-    return eserBasligi(eser).replace(/\s+/g, ' ') + '\n' + String(alt).replace(/\s+/g, ' ');
+    return eserBasligi(eser).replace(/\s+/g, ' ');
+  }
+
+  // Giriş salonlarının ("root", "root#1") ve ayar bloğunun adıyla çakışmasın.
+  function salonAdiGuvenli(ad) {
+    return /^(root(#\d+)?|technical)$/i.test(ad) ? ad + ' Koleksiyonu' : ad;
   }
 
   async function sergiyiKur() {
@@ -146,22 +169,32 @@
     const eserler = (manifest.veri || []).filter((e) => e && e.envanterNo && e.gorseller && e.gorseller.length);
     if (!eserler.length) throw new MuzeHatasi('bos');
 
+    // Koleksiyon sırası ve açıklaması manifestten (sunucu salon sırasına göre dizer)
+    const tanim = new Map();
+    ((manifest.kurum && manifest.kurum.koleksiyonlar) || []).forEach((k, i) => {
+      const anahtar = odaAnahtari(k.ad);
+      if (!tanim.has(anahtar)) tanim.set(anahtar, { sira: i, aciklama: String(k.aciklama || '').trim() });
+    });
     const gruplar = new Map();
     eserler.forEach((e) => {
-      const ad = String(e.atolye || e.koleksiyon || 'Genel Koleksiyon').trim();
+      const ad = String(e.koleksiyon || e.atolye || 'Genel Koleksiyon').trim();
       const anahtar = odaAnahtari(ad);
-      if (!gruplar.has(anahtar)) gruplar.set(anahtar, { yazimlar: new Map(), eserler: [] });
+      if (!gruplar.has(anahtar)) gruplar.set(anahtar, { anahtar, yazimlar: new Map(), eserler: [] });
       const g = gruplar.get(anahtar);
       g.eserler.push(e);
       g.yazimlar.set(ad, (g.yazimlar.get(ad) || 0) + 1);
     });
     const odalar = [...gruplar.values()]
-      .map((g) => ({ ad: gorunenAd(g.yazimlar), eserler: g.eserler }))
-      .sort((a, b) => a.ad.localeCompare(b.ad, 'tr'));
+      .map((g) => {
+        const t = tanim.get(g.anahtar) || { sira: 1e6, aciklama: '' };
+        return { ad: salonAdiGuvenli(gorunenAd(g.yazimlar)), eserler: g.eserler, sira: t.sira, aciklama: t.aciklama };
+      })
+      .sort((a, b) => a.sira - b.sira || a.ad.localeCompare(b.ad, 'tr'));
 
     const olculer = await havuz(eserler, OLCU_ESZAMANLI, gorselOlcusu, (n, t) =>
-      durum(eserler.length + ' eser ' + odalar.length + ' atölye salonuna yerleştiriliyor… (' + n + '/' + t + ')'));
+      durum(eserler.length + ' eser ' + odalar.length + ' koleksiyon salonuna yerleştiriliyor… (' + n + '/' + t + ')'));
     const olcu = new Map(eserler.map((e, i) => [e, olculer[i]]));
+    olcuOnbelleginiYaz();
 
     const katalog = await loadCatalog(cdn_base);
     const stil = katalog.styles[AYAR.stil] ? AYAR.stil : Object.keys(katalog.styles)[0];
@@ -215,7 +248,7 @@
           };
           eserHaritasi[ad][e.envanterNo] = e;
         });
-        salonlar.push({ ad: ad, atolye: oda.ad, sayi: salon.indices.length });
+        salonlar.push({ ad: ad, koleksiyon: oda.ad, bolum: n + 1, sayi: salon.indices.length, aciklama: oda.aciklama });
         ebeveyn = ad;
       });
     }
@@ -236,7 +269,7 @@
     window.EOM_SERGI = {
       dil: dil,
       toplam: eserler.length,
-      odalar: odalar.map((o) => ({ ad: o.ad, sayi: o.eserler.length })),
+      odalar: odalar.map((o) => ({ ad: o.ad, sayi: o.eserler.length, aciklama: o.aciklama })),
       salonlar: salonlar,
       eserler: eserHaritasi,
       baslik: eserBasligi
@@ -254,7 +287,7 @@
     ag: ['Sergiye bağlanılamadı', 'İnternet bağlantınızı kontrol edip sayfayı yenileyin.'],
     yogun: ['Müze şu an çok yoğun', 'Birkaç dakika sonra sayfayı yenileyerek tekrar deneyin.'],
     sunucu: ['Sergi yüklenemedi', 'Müze sunucusu yanıt vermedi. Birkaç dakika sonra tekrar deneyin.'],
-    bos: ['Sergi hazırlanıyor', 'Sanal müzede henüz yayında eser yok. Eserler masaüstü uygulamasındaki Sanal Müze ekranından yayına alındığında burada atölyelerine göre sergilenir.']
+    bos: ['Sergi hazırlanıyor', 'Sanal müzede henüz yayında eser yok. Eserler masaüstü uygulamasındaki Sanal Müze ekranından yayına alındığında burada koleksiyonlarına göre sergilenir.']
   };
 
   function hatayiGoster(hata) {

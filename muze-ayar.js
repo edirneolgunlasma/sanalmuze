@@ -9,7 +9,7 @@ window.EOM_MUZE = {
   // Bu sayfa herkese açık olduğu için anahtar da görünür: yalnızca bu site için
   // ayrı bir anahtar üretin. Sızarsa uygulamadan silip yenisini buraya yazmanız yeter;
   // anahtar salt-okunurdur ve yalnızca zaten yayında olan eserleri döndürür.
-  apiAnahtari: '',
+  apiAnahtari: 'eom_6bb8465d5d7d4cabb5021adb59be151b5874f116fb3c49b5',
 
   // Sergi metinlerinin dili: tr, en, de, bg, ar. Adres çubuğunda ?dil=en ile değişir.
   // Bir eserin o dilde metni yoksa Türkçesi gösterilir.

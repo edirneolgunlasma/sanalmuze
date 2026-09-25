@@ -13,9 +13,16 @@ var text3D_builder=function(name, item_position, vector, parent, scene){
 	const north_vector=new BABYLON.Vector3(0, 0, 1);
 	maxLength=1.3;
 	
-	texto=name.replace("root", "Hall");
-	texto=texto.replace(/d_(.+)_\d+/, "$1");
-	
+	texto=name.replace(/d_(.+)_\d+/, "$1");
+	// Giriş salonları: "root" → "Ana Salon", zincirlenen "root 1" → "Ana Salon 2"
+	texto=texto.replace(/^root(?:[ #](\d+))?$/, function(m, n){ return n ? "Ana Salon " + (Number(n) + 1) : "Ana Salon"; });
+	// 3B yazı tipinde ş, ğ, İ gibi harflerin glifi yok; eksik harf temel harfine düşer (ş→s)
+	texto=Array.from(texto).map(function(ch){
+		if (!fontContent || !fontContent.glyphs || fontContent.glyphs[ch]) return ch;
+		var temel=ch.normalize("NFD").charAt(0);
+		return fontContent.glyphs[temel] ? temel : ch;
+	}).join("");
+
 	myText = BABYLON.MeshBuilder.CreateText("T_" + texto, texto, fontContent, {
 		size: 0.2,
 		resolution: 5, 

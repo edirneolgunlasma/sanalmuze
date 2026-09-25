@@ -72,64 +72,95 @@ var text3D_builder=function(name, item_position, vector, parent, scene){
 
 }
 
-var plaque_builder = function(name, item_position, item_size, vector, metadata, scene) {
-	// Renders an optional museum-style plaque below artwork using DynamicTexture
-	// metadata format: "ID #N Title\nSubtitle" — ID prefix is stripped for display
+// Uzun eser adını en çok iki satıra böler; sığmayan kısım "…" ile kısalır.
+function plaqueSatirlari(ctx, metin, maxPx, maxSatir) {
+	var kelimeler = String(metin).split(/\s+/).filter(Boolean);
+	var satirlar = [];
+	var satir = '';
+	for (var i = 0; i < kelimeler.length; i++) {
+		var aday = satir ? satir + ' ' + kelimeler[i] : kelimeler[i];
+		if (ctx.measureText(aday).width <= maxPx || !satir) { satir = aday; continue; }
+		satirlar.push(satir);
+		satir = kelimeler[i];
+		if (satirlar.length === maxSatir - 1) { satir = kelimeler.slice(i).join(' '); break; }
+	}
+	if (satir) satirlar.push(satir);
+	var son = satirlar.length - 1;
+	if (ctx.measureText(satirlar[son]).width > maxPx) {
+		var kisa = satirlar[son];
+		while (kisa.length > 1 && ctx.measureText(kisa + '…').width > maxPx) kisa = kisa.slice(0, -1);
+		satirlar[son] = kisa.replace(/\s+$/, '') + '…';
+	}
+	return satirlar;
+}
 
+var plaque_builder = function(name, item_position, item_size, vector, metadata, scene) {
+	// Müze etiketi: eserin altında, açık renkli bir kart üzerinde eser adı.
+	// metadata biçimi: "ID #N Başlık\nAlt satır" — ID öneki gösterilmez, alt satır isteğe bağlı.
 	var plaqueText = metadata.replace(/^ID\s*#\d+\s*/, '');
 	if (!plaqueText.trim()) return;
-
 	var lines = plaqueText.split('\n');
-	var titleText = lines[0] || '';
-	var subtitleText = lines.length > 1 ? lines[1] : '';
+	var titleText = (lines[0] || '').trim();
+	var subtitleText = (lines[1] || '').trim();
 
-	// Plaque height is a fixed physical size, matching what an M-bucket artwork
-	// (120 cm longest edge = 2.5 babylon m) used to produce — the text is drawn
-	// off texH, so it never grows or shrinks with the image. The width does
-	// follow the artwork, up to half its span, so wide pieces get a plaque that
-	// reads as part of the hang instead of a stub, and long titles stop clipping.
-	var baseW = 2.5 * 0.38;
-	var plaqueH = baseW * 0.3;
-	var texH = Math.round(512 * 0.3);
-	// Clamp to what a 2048 px texture can cover at this height, so the texture
-	// aspect always matches the plane and the text is never stretched.
-	var plaqueW = Math.min(Math.max(baseW, item_size.width * 0.5), plaqueH * (2048 / texH));
-	var texW = Math.round(texH * (plaqueW / plaqueH));
+	// Doku çözünürlüğü (piksel/metre). Dokunmatik cihazda bellek için daha düşük.
+	var PX_M = (typeof isTouchDevice !== 'undefined' && isTouchDevice) ? 480 : 900;
+	var padX = 0.07, padY = 0.05, lineH = 0.085;           // metre
+	var minW = 0.7, maxW = Math.max(0.9, Math.min(item_size.width * 0.95, 1.6));
+	var titleFont = '600 ' + Math.round(0.058 * PX_M) + 'px Georgia, "Times New Roman", serif';
+	var subFont = 'italic ' + Math.round(0.04 * PX_M) + 'px Georgia, "Times New Roman", serif';
 
-	var dynTex = new BABYLON.DynamicTexture("plaqueTex_" + name, {width: texW, height: texH}, scene, false);
-	var ctx = dynTex.getContext();
-
-	// Transparent background — only the text is painted, the wall shows through
-	ctx.clearRect(0, 0, texW, texH);
-
-	// Title — soft dark-gray text, centered
-	var titleSize = Math.round(texH * 0.32);
-	ctx.font = "bold " + titleSize + "px Inter, Arial, sans-serif";
-	ctx.fillStyle = "#5a5a5a";
-	ctx.textAlign = "center";
-	ctx.textBaseline = "middle";
-	var centerX = texW / 2;
-	var centerY = subtitleText ? (texH * 0.38) : (texH / 2);
-	ctx.fillText(titleText, centerX, centerY);
-
-	// Subtitle — soft dark-gray text, centered
+	var olcum = plaque_builder._olcum || (plaque_builder._olcum = document.createElement('canvas').getContext('2d'));
+	olcum.font = titleFont;
+	var satirlar = plaqueSatirlari(olcum, titleText, (maxW - 2 * padX) * PX_M, 2);
+	var metinPx = 0;
+	for (var i = 0; i < satirlar.length; i++) metinPx = Math.max(metinPx, olcum.measureText(satirlar[i]).width);
 	if (subtitleText) {
-		var subSize = Math.round(texH * 0.22);
-		ctx.font = subSize + "px Inter, Arial, sans-serif";
-		ctx.fillStyle = "#5a5a5a";
-		ctx.fillText(subtitleText, centerX, centerY + titleSize * 0.9);
+		olcum.font = subFont;
+		metinPx = Math.max(metinPx, Math.min(olcum.measureText(subtitleText).width, (maxW - 2 * padX) * PX_M));
 	}
 
+	var plaqueW = Math.min(maxW, Math.max(minW, metinPx / PX_M + 2 * padX));
+	var plaqueH = 2 * padY + satirlar.length * lineH + (subtitleText ? lineH * 0.75 : 0);
+	var texW = Math.round(plaqueW * PX_M);
+	var texH = Math.round(plaqueH * PX_M);
+
+	// Mipmap: uzaktan bakınca yazı titremesin (NPOT doku WebGL2 ister)
+	var mip = scene.getEngine().webGLVersion > 1;
+	var dynTex = new BABYLON.DynamicTexture("plaqueTex_" + name, {width: texW, height: texH}, scene, mip);
+	dynTex.anisotropicFilteringLevel = 8;
+	var ctx = dynTex.getContext();
+
+	// Kart: sıcak kırık beyaz zemin, ince çerçeve
+	ctx.fillStyle = '#f5f0e6';
+	ctx.fillRect(0, 0, texW, texH);
+	var cizgi = Math.max(1, Math.round(PX_M * 0.004));
+	ctx.strokeStyle = 'rgba(120, 98, 64, 0.45)';
+	ctx.lineWidth = cizgi;
+	ctx.strokeRect(cizgi / 2, cizgi / 2, texW - cizgi, texH - cizgi);
+
+	// Eser adı: koyu kahve, ortalı, serif
+	ctx.fillStyle = '#2a231b';
+	ctx.textAlign = 'center';
+	ctx.textBaseline = 'middle';
+	ctx.font = titleFont;
+	var y = padY * PX_M + lineH * PX_M / 2;
+	for (var j = 0; j < satirlar.length; j++) {
+		ctx.fillText(satirlar[j], texW / 2, y, texW - 2 * padX * PX_M);
+		y += lineH * PX_M;
+	}
+	if (subtitleText) {
+		ctx.font = subFont;
+		ctx.fillStyle = '#6b5d4b';
+		ctx.fillText(subtitleText, texW / 2, y - lineH * PX_M * 0.1, texW - 2 * padX * PX_M);
+	}
 	dynTex.update();
-	dynTex.hasAlpha = true;
 
 	var plaqueMat = new BABYLON.StandardMaterial("plaqueMat_" + name, scene);
 	plaqueMat.diffuseTexture = dynTex;
 	plaqueMat.emissiveTexture = dynTex;
 	plaqueMat.specularColor = new BABYLON.Color3(0, 0, 0);
 	plaqueMat.disableLighting = true;
-	plaqueMat.useAlphaFromDiffuseTexture = true;
-	plaqueMat.transparencyMode = BABYLON.Material.MATERIAL_ALPHABLEND;
 
 	var base_vector = new BABYLON.Vector3(0, 0, 0);
 	var abstractPlane = BABYLON.Plane.FromPositionAndNormal(base_vector, vector);
@@ -248,10 +279,17 @@ var artwork_texture = function(url, material, scene, onLoaded){
 	var cap = (typeof isTouchDevice !== 'undefined' && isTouchDevice
 		&& typeof max_artwork_px !== 'undefined') ? max_artwork_px : 0;
 
+	// Bir görsel yüklenemezse (paylaşıma açılmamış Drive dosyası, geçici 429) ya da
+	// hiç yanıt gelmezse de "bitti" sayılır; yoksa salonun yükleme ekranı hiç kapanmaz.
+	var bitti = false;
+	var bitir = function(){ if (!bitti) { bitti = true; onLoaded(); } };
+	setTimeout(bitir, 30000);
+
 	if (!cap){
-		var full = new BABYLON.Texture(url, scene);
+		// undefined geçilen bağımsız değişkenler Babylon varsayılanlarını korur
+		var full = new BABYLON.Texture(url, scene, undefined, undefined, undefined, null, bitir);
 		apply(full);
-		full.onLoadObservable.add(onLoaded);
+		full.onLoadObservable.add(bitir);
 		return;
 	}
 
@@ -260,7 +298,7 @@ var artwork_texture = function(url, material, scene, onLoaded){
 	// DynamicTexture's canvas untainted and therefore uploadable to WebGL.
 	img.crossOrigin = "anonymous";
 	// Count a failed image as done, or one bad URL leaves the loading bar short.
-	img.onerror = function(){ onLoaded(); };
+	img.onerror = bitir;
 	img.onload = function(){
 		var scale = Math.min(1, cap / Math.max(img.width, img.height));
 		var w = Math.max(1, Math.round(img.width * scale));
@@ -269,7 +307,7 @@ var artwork_texture = function(url, material, scene, onLoaded){
 		tex.getContext().drawImage(img, 0, 0, w, h);
 		tex.update();
 		apply(tex);
-		onLoaded();
+		bitir();
 	};
 	img.src = url;
 };

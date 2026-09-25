@@ -755,17 +755,23 @@
         <p class="eom-ust-baslik">Edirne · Sanal Müze</p>
         <h1 id="eom-giris-baslik">Edirne Olgunlaşma Enstitüsü<span>Sanal Müzesi</span></h1>
         <div class="eom-lale-bolucu"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-16 -14 32 30" fill="currentColor" aria-hidden="true">  <path d="M0-13C4.5-8.5 5.2-2.5 0 4C-5.2-2.5-4.5-8.5 0-13Z"/>  <path d="M0 4C-8 2.5-11-5-8-11.5C-6.2-5.5-3.6-1.4 0 4Z"/>  <path d="M0 4C8 2.5 11-5 8-11.5C6.2-5.5 3.6-1.4 0 4Z"/>  <rect x="-0.6" y="3.5" width="1.2" height="11"/>  <path d="M0 12C-3 8-7 7.5-10 8.5C-7 10.5-3.5 11.5 0 12Z"/>  <path d="M0 10C3 6.5 7 6 10 7C7 9 3.5 10 0 10Z"/></svg></div>
-        <p class="eom-giris-metin">Selimiye'nin şehrinde, enstitümüzün atölyelerinde ustalarımızın elinden çıkan eserleri üç boyutlu salonlarda gezin. Her atölyenin kendi salonu var; salonlara giriş salonundaki kapılardan geçilir. Bir esere tıkladığınızda hikayesi, künyesi ve büyük görseli açılır.</p>
+        <p class="eom-giris-metin">Selimiye'nin şehrinde, enstitümüzün atölyelerinde ustalarımızın elinden çıkan eserleri üç boyutlu salonlarda gezin. Her koleksiyonun kendi salonu var; salonlara giriş salonundaki kapılardan geçilir. Bir esere tıkladığınızda adı, ölçüsü, hikayesi ve büyük görseli açılır.</p>
         <p class="eom-giris-sayi" id="eom-giris-sayi"></p>
-        <ul class="eom-atolyeler" id="eom-atolyeler" aria-label="Atölye salonları"></ul>
+        <ul class="eom-atolyeler" id="eom-atolyeler" aria-label="Koleksiyon salonları"></ul>
         <button class="eom-dugme" id="eom-giris-kapat" type="button">Müzeyi Gez</button>
       </div>
     </div>
 
-    <button id="eom-oda-rozeti" type="button" hidden aria-label="Müze tanıtımı ve atölye salonları">
+    <button id="eom-oda-rozeti" type="button" hidden aria-label="Müze tanıtımı ve koleksiyon salonları">
       <span class="eom-ust-baslik">Edirne Olgunlaşma Enstitüsü</span>
       <strong id="eom-oda-adi">Ana Salon</strong>
     </button>
+
+    <div id="eom-salon-tanitim" role="status" aria-live="polite" hidden>
+      <p class="eom-ust-baslik">Koleksiyon</p>
+      <strong id="eom-salon-tanitim-ad"></strong>
+      <p id="eom-salon-tanitim-metin"></p>
+    </div>
 
     <aside id="eom-eser-panel" aria-labelledby="eom-eser-baslik" aria-hidden="true">
       <button class="eom-kapat" id="eom-panel-kapat" type="button" aria-label="Kapat">&times;</button>
@@ -776,14 +782,9 @@
         </figure>
         <div class="eom-kucukler" id="eom-kucukler" hidden></div>
         <div class="eom-icerik">
-          <p class="eom-ust-baslik" id="eom-eser-atolye"></p>
           <h2 id="eom-eser-baslik"></h2>
-          <p class="eom-ozet" id="eom-eser-ozet" hidden></p>
+          <p class="eom-olcu" id="eom-eser-olcu" hidden></p>
           <div class="eom-hikaye" id="eom-eser-hikaye"></div>
-          <h3>Künye</h3>
-          <dl class="eom-kunye" id="eom-eser-kunye"></dl>
-          <p class="eom-lisans" id="eom-eser-lisans"></p>
-          <a class="eom-sanal-tur" id="eom-eser-tur" target="_blank" rel="noopener" hidden>Sanal turu aç ↗</a>
         </div>
       </div>
       <nav class="eom-panel-alt" aria-label="Salondaki eserler">

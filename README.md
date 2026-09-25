@@ -4,10 +4,12 @@ Enstitü atölyelerinde üretilen eserlerin üç boyutlu sanal müzesi. [OpenVGA
 
 ## Nasıl çalışır
 
-- **Eserler masaüstü uygulamasından gelir.** Envanter uygulamasında **🏛️ Sanal Müze** ekranında eserler seçilip **Seçilenleri Sanal Müzeye Gönder** ile yayına alınır (ya da tek tek, "Sergi Bilgileri" formundan). Site her açılışta Sanal Müze API'sinin `manifest` ucundan yalnızca **yayında** olan eserleri okur; `building_v2.json` kullanılmaz, eser eklemek için bu depoya dokunmak gerekmez.
-- **Her atölye bir salondur.** Eserler envanterdeki atölyeye göre gruplanır (Edirnekâri, Çini, İğne Oyası, El Dokuma…). Bir salona sığmayan atölye "Edirnekâri 2" gibi devam eder. Yerleşim OpenVGAL üreticisinin duvar paketleyicisiyle tarayıcıda yapılır.
-- **Giriş salonu** ortadaki tabelada Selimiye silueti ve "Edirne Olgunlaşma Enstitüsü · Sanal Müze" yazısını taşır (`site/materials/logo.png`); kapıların üzerinde atölye adları yazar. Açılışta enstitüyü tanıtan ve atölye salonlarını listeleyen bir karşılama kartı gösterilir.
-- **Esere tıklanınca** sağda (telefonda alttan) hikaye, künye ve büyük görsel açılır; görsele tıklayınca 2048 px'lik hali tam ekran açılır.
+- **Eserler masaüstü uygulamasından gelir.** Envanter uygulamasında **🏛️ Sanal Müze** ekranında eserler seçilip **Seçilenleri Sanal Müzeye Gönder** ile, bir **koleksiyon** seçilerek yayına alınır. Yayındakiler sekmesinden kaldırılır ya da başka koleksiyona taşınır. Site her açılışta Sanal Müze API'sinin `manifest` ucundan yalnızca **yayında** olan eserleri okur; `building_v2.json` kullanılmaz, eser eklemek için bu depoya dokunmak gerekmez.
+- **Her koleksiyon bir salondur.** Salon sırası ve salona girince görünen açıklama uygulamadaki **Koleksiyonlar** sekmesinden verilir. Bir salona sığmayan koleksiyon "Selimiye Esintileri · 2. salon" diye devam eder. Yerleşim OpenVGAL üreticisinin duvar paketleyicisiyle tarayıcıda yapılır.
+- **Giriş salonu** ortadaki tabelada Selimiye silueti ve "Edirne Olgunlaşma Enstitüsü · Sanal Müze" yazısını taşır (`site/materials/logo.png`); kapıların üzerinde koleksiyon adları yazar. Açılışta enstitüyü tanıtan ve koleksiyonları listeleyen bir karşılama kartı gösterilir.
+- **Eserin altında** kırık beyaz bir müze etiketinde eserin adı yazar.
+- **Esere tıklanınca** sağda (telefonda alttan) yalnızca eserin **adı, ölçüsü ve hikayesi** ile büyük görseli açılır; görsele tıklayınca 2048 px'lik hali tam ekran açılır.
+- Görseli yüklenemeyen eser (Drive'da paylaşıma açılmamış vb.) salonun açılmasını engellemez.
 - Sergi metinleri `?dil=en` (tr, en, de, bg, ar) ile başka dilde gösterilebilir; o dilde metni olmayan eser Türkçe görünür.
 
 ## Kurulum
@@ -22,11 +24,11 @@ Enstitü atölyelerinde üretilen eserlerin üç boyutlu sanal müzesi. [OpenVGA
 | Dosya | Görev |
 | --- | --- |
 | `site/muze-ayar.js` | API adresi, anahtar, dil ve salon görünümü |
-| `site/entegre.js` | Manifesti alır, atölyelere göre salonları kurar, hata ekranları |
-| `site/muze-arayuz.js`, `site/muze-arayuz.css` | Karşılama kartı, salon rozeti, eser paneli, büyük görsel |
+| `site/entegre.js` | Manifesti alır, koleksiyonlara göre salonları kurar, hata ekranları |
+| `site/muze-arayuz.js`, `site/muze-arayuz.css` | Karşılama kartı, salon rozeti ve tanıtımı, eser kartı, büyük görsel |
 | `site/materials/logo.png` | Giriş salonundaki Edirne temalı tabela |
 | `site/openvgal-viewer.js` | `building_v2.json` yerine `window.eomSergiHazirla()` kancası |
-| `site/room_builder_aux.js` | Kapı yazıları: "Ana Salon"; 3B yazı tipinde olmayan ş/ğ/İ temel harfe düşer |
+| `site/room_builder_aux.js` | Müze etiketi (eser adı); kapı yazıları "Ana Salon", 3B yazı tipinde olmayan ş/ğ/İ temel harfe düşer; yüklenemeyen görsel salonu kilitlemez |
 | `site/overlay.js`, `site/overlay.html` | Türkçe denetimler, esere tıklayınca panel, etiketler varsayılan açık |
 
 ---

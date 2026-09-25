@@ -6,14 +6,6 @@
 
   const $ = (id) => document.getElementById(id);
 
-  const KUNYE_ALANLARI = [
-    ['atolye', 'Atölye'], ['tema', 'Tema'], ['urunCinsi', 'Ürün cinsi'], ['teknik', 'Teknik'],
-    ['malzeme', 'Malzeme'], ['materyalTipi', 'Materyal tipi'], ['olculeri', 'Ölçüler'],
-    ['motif', 'Geleneksel motif'], ['renkPaleti', 'Renk paleti'], ['donem', 'Dönem'],
-    ['uretimTarihi', 'Üretim tarihi'], ['uretimYeri', 'Üretim yeri'], ['koken', 'Köken'],
-    ['uretici', 'Üretici']
-  ];
-
   let gorselSira = 0;
   let acikEser = null;
   let oncekiOdak = null;
@@ -28,11 +20,14 @@
     if (!ad || ad === 'root') return 'Ana Salon';
     const hub = /^root#(\d+)$/.exec(ad);
     if (hub) return 'Ana Salon ' + (Number(hub[1]) + 1);
-    const s = sergi();
-    const salon = s && s.salonlar.find((x) => x.ad === ad);
+    const salon = salonBilgisi(ad);
     if (!salon) return ad;
-    const ek = ad === salon.atolye ? '' : ' · ' + ad.slice(salon.atolye.length).trim();
-    return salon.atolye + ' Salonu' + ek;
+    return salon.koleksiyon + (salon.bolum > 1 ? ' · ' + salon.bolum + '. salon' : '');
+  }
+
+  function salonBilgisi(ad) {
+    const s = sergi();
+    return (s && s.salonlar.find((x) => x.ad === ad)) || null;
   }
 
   // Görüntüleyicinin eser sırası: salon nesnesindeki "image" anahtarlarının sırası
@@ -56,32 +51,15 @@
     return e;
   }
 
-  // Künyedeki tarih e-tablodan "2026-06-01" ya da ISO zaman damgası olarak gelebilir.
-  function tarihMetni(deger) {
-    const m = /^(\d{4})-(\d{2})-(\d{2})(T.*)?$/.exec(String(deger).trim());
-    if (!m) return String(deger);
-    const tarih = m[4] ? new Date(String(deger).trim()) : new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-    if (isNaN(tarih)) return String(deger);
-    return tarih.toLocaleDateString('tr-TR', m[4]
-      ? { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Istanbul' }
-      : { day: 'numeric', month: 'long', year: 'numeric' });
-  }
-
-  function guvenliAdres(adres) {
-    try {
-      const u = new URL(String(adres));
-      return u.protocol === 'https:' || u.protocol === 'http:' ? u.href : '';
-    } catch (e) {
-      return '';
-    }
-  }
-
   // --- Eser paneli ---
   function gorseliGoster() {
     const e = acikEser && acikEser.eser;
     if (!e) return;
     const g = e.gorseller[gorselSira] || e.gorseller[0];
     const img = $('eom-gorsel-img');
+    const cerceve = img.closest('.eom-gorsel');
+    cerceve.classList.remove('hatali');
+    img.onerror = () => cerceve.classList.add('hatali');
     img.src = g.buyuk || g.tamBoy;
     img.alt = sergi().baslik(e);
     $('eom-kucukler').querySelectorAll('button').forEach((b, i) => {
@@ -89,49 +67,20 @@
     });
   }
 
+  // Bilgi kartı yalnızca eserin adını, ölçüsünü ve hikayesini gösterir.
   function paneliCiz(bulgu) {
     acikEser = bulgu;
     const e = bulgu.eser;
-    const k = e.kunye || {};
-    const icerik = e.icerik || {};
-    const baslik = sergi().baslik(e);
+    const olculeri = String((e.kunye && e.kunye.olculeri) || '').trim();
+    $('eom-eser-baslik').textContent = sergi().baslik(e);
 
-    const atolye = k.atolye || e.atolye || e.koleksiyon || '';
-    $('eom-eser-atolye').textContent = atolye ? atolye + ' Atölyesi' : 'Edirne Olgunlaşma Enstitüsü';
-    $('eom-eser-baslik').textContent = baslik;
-
-    const ozet = $('eom-eser-ozet');
-    ozet.textContent = icerik.ozet || '';
-    ozet.hidden = !icerik.ozet;
+    const olcu = $('eom-eser-olcu');
+    olcu.textContent = olculeri ? 'Ölçü: ' + olculeri : '';
+    olcu.hidden = !olculeri;
 
     const hikaye = $('eom-eser-hikaye');
-    hikaye.replaceChildren(...String(icerik.hikaye || '').split(/\n+/)
+    hikaye.replaceChildren(...String((e.icerik && e.icerik.hikaye) || '').split(/\n+/)
       .map((s) => s.trim()).filter(Boolean).map((s) => el('p', '', s)));
-
-    const kunye = $('eom-eser-kunye');
-    const satirlar = [];
-    if (k.eserAdi && k.eserAdi !== baslik) satirlar.push(['Eser adı', k.eserAdi]);
-    KUNYE_ALANLARI.forEach(([alan, etiket]) => {
-      if (k[alan] && !(alan === 'atolye' && !k.atolye)) satirlar.push([etiket, k[alan], alan]);
-    });
-    satirlar.push(['Envanter no', e.envanterNo]);
-    kunye.replaceChildren(...satirlar.flatMap(([etiket, deger, alan]) => {
-      const dd = el('dd', '', '');
-      const renk = alan === 'renkPaleti' && /^#?[0-9a-f]{6}$/i.test(String(deger).trim());
-      if (renk) {
-        const kutu = el('span', 'eom-renk');
-        kutu.style.background = String(deger).trim().replace(/^#?/, '#');
-        dd.append(kutu);
-      }
-      dd.append(document.createTextNode(alan === 'uretimTarihi' ? tarihMetni(deger) : String(deger)));
-      return [el('dt', '', etiket), dd];
-    }));
-
-    $('eom-eser-lisans').textContent = (e.lisans || 'Tüm hakları saklıdır') + ' · Edirne Olgunlaşma Enstitüsü';
-    const tur = $('eom-eser-tur');
-    const turAdresi = guvenliAdres(e.sanalTur);
-    tur.hidden = !turAdresi;
-    if (turAdresi) tur.href = turAdresi;
 
     const kucukler = $('eom-kucukler');
     kucukler.hidden = e.gorseller.length < 2;
@@ -244,7 +193,7 @@
   }
 
   function sergiHazir(s) {
-    $('eom-giris-sayi').textContent = s.toplam + ' eser · ' + s.odalar.length + ' atölye salonu';
+    $('eom-giris-sayi').textContent = s.toplam + ' eser · ' + s.odalar.length + ' koleksiyon';
     $('eom-atolyeler').replaceChildren(...s.odalar.map((o) => {
       const li = el('li');
       const b = el('button');
@@ -259,15 +208,36 @@
     $('eom-oda-rozeti').hidden = false;
   }
 
+  // Koleksiyon salonuna girilince adı ve açıklaması birkaç saniye görünür.
+  let tanitimZamanlayici = null;
+  function salonTanit(ad) {
+    const kutu = $('eom-salon-tanitim');
+    clearTimeout(tanitimZamanlayici);
+    const salon = salonBilgisi(ad);
+    if (!salon || !salon.aciklama) { kutu.hidden = true; return; }
+    $('eom-salon-tanitim-ad').textContent = salonAdi(ad);
+    $('eom-salon-tanitim-metin').textContent = salon.aciklama;
+    kutu.hidden = false;
+    tanitimZamanlayici = setTimeout(() => { kutu.hidden = true; }, 8000);
+  }
+
+  // Tanıtım, salon yüklenip yükleme ekranı (#loader) kapandıktan sonra gösterilir.
   let sonSalon = null;
+  let bekleyenTanitim = null;
   function salonuIzle() {
     const ad = gecerliSalon();
     if (ad && ad !== sonSalon) {
       sonSalon = ad;
       paneliKapat();
+      $('eom-salon-tanitim').hidden = true;
       const s = sergi();
       const sayi = s && s.eserler[ad] ? Object.keys(s.eserler[ad]).length : 0;
       $('eom-oda-adi').textContent = salonAdi(ad) + (sayi ? ' · ' + sayi + ' eser' : '');
+      bekleyenTanitim = ad;
+    }
+    if (bekleyenTanitim && bekleyenTanitim === ad && !document.getElementById('loader')) {
+      bekleyenTanitim = null;
+      salonTanit(ad);
     }
   }
 

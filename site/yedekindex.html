@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenVGAL — open-source 3D virtual gallery engine</title>
+    <meta name="description" content="The open-source WebGL engine for 3D virtual art galleries. Build one from your images, download the ZIP, host it anywhere. MIT licensed, no account needed.">
+    <link rel="canonical" href="https://demo.openvgal.com/">
+    <meta property="og:title" content="OpenVGAL — open-source 3D virtual gallery engine">
+    <meta property="og:description" content="The open-source WebGL engine for 3D virtual art galleries. Build one from your images, download the ZIP, host it anywhere. MIT licensed, no account needed.">
+    <meta property="og:image" content="https://demo.openvgal.com/preview.jpg">
+    <meta property="og:url" content="https://demo.openvgal.com/">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="OpenVGAL — open-source 3D virtual gallery engine">
+    <meta name="twitter:description" content="Build a 3D virtual art gallery from your images, download the ZIP, host it anywhere. MIT licensed.">
+    <meta name="twitter:image" content="https://demo.openvgal.com/preview.jpg">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><rect width='256' height='256' fill='%23faf8f3'/><polygon points='35.84,35.84 220.16,35.84 161.18,87.14 94.82,87.14' fill='%23fbf9f5'/><polygon points='35.84,35.84 94.82,87.14 94.82,153.5 35.84,220.16' fill='%23fefdfb'/><polygon points='220.16,35.84 161.18,87.14 161.18,153.5 220.16,220.16' fill='%23fefdfb'/><polygon points='35.84,220.16 220.16,220.16 161.18,153.5 94.82,153.5' fill='%23c89b6e'/><rect x='94.82' y='87.14' width='66.36' height='66.36' fill='%23fbf9f5'/><line x1='35.84' y1='35.84' x2='94.82' y2='87.14' stroke='%231c1c24' stroke-width='4.84'/><line x1='220.16' y1='35.84' x2='161.18' y2='87.14' stroke='%231c1c24' stroke-width='4.84'/><line x1='35.84' y1='220.16' x2='94.82' y2='153.5' stroke='%231c1c24' stroke-width='4.84'/><line x1='220.16' y1='220.16' x2='161.18' y2='153.5' stroke='%231c1c24' stroke-width='4.84'/><rect x='94.82' y='87.14' width='66.36' height='66.36' fill='none' stroke='%231c1c24' stroke-width='5.76'/><rect x='35.84' y='35.84' width='184.32' height='184.32' fill='none' stroke='%231c1c24' stroke-width='6.91'/></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;1,400;1,500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.openvgal.com/core/brand.css">
+    <style>
+        /* ============================================================
+           OpenVGAL landing — "Quiet Gallery" brand.
+           Design tokens load from the shared stylesheet linked above
+           (cdn.openvgal.com/core/brand.css, source site/css/brand.css);
+           only page-specific rules live here. The one local override
+           keeps this page's tighter large-radius (brand default is 8px).
+           Mark is the canonical "open threshold" logo.
+           ============================================================ */
+        :root { --radius-lg: 4px; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--paper);
+            color: var(--ink);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.5;
+        }
+
+        .content { position: relative; z-index: 1; }
+        .mk { display: block; overflow: visible; }
+
+        /* --- NAV --- */
+        nav {
+            max-width: var(--maxw);
+            margin: 0 auto;
+            padding: 1.4rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--rule);
+        }
+        .brand { display: flex; align-items: center; gap: 15px; text-decoration: none; }
+        .brand .mk { width: 44px; height: 44px; }
+        .brand .word {
+            font-family: var(--font-sans);
+            font-weight: 500;
+            font-size: 25px;
+            letter-spacing: -0.6px;
+            color: var(--ink);
+        }
+        .nav-links { display: flex; gap: 2rem; align-items: center; }
+        .nav-links a {
+            color: var(--ink-2);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.15s;
+        }
+        .nav-links a:hover { color: var(--ink); }
+        .nav-cta {
+            font-family: var(--font-mono) !important;
+            font-size: 12.5px !important;
+            letter-spacing: 0.3px;
+            color: var(--paper) !important;
+            background: var(--ink);
+            border: 1px solid var(--ink);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            transition: background 0.18s, color 0.18s;
+        }
+        .nav-cta:hover { background: transparent; color: var(--ink) !important; }
+
+        /* --- HERO --- */
+        .hero {
+            max-width: var(--maxw);
+            margin: 0 auto;
+            padding: 7rem 2rem 5rem;
+            text-align: center;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: var(--wood-deep);
+            background: color-mix(in oklab, var(--wood) 18%, transparent);
+            border: 1px solid color-mix(in oklab, var(--wood) 40%, transparent);
+            padding: 0.4rem 0.95rem;
+            border-radius: 100px;
+            margin-bottom: 2rem;
+        }
+        .hero-badge-dot {
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: var(--wood-deep);
+        }
+
+        .hero h1 {
+            font-family: var(--font-sans);
+            font-size: clamp(2.6rem, 5.5vw, 4.4rem);
+            font-weight: 600;
+            line-height: 1.05;
+            letter-spacing: -1.5px;
+            color: var(--ink);
+            margin-bottom: 1.5rem;
+            text-wrap: balance;
+        }
+        .hero h1 .gradient-text {
+            font-family: var(--font-serif);
+            font-weight: 400;
+            font-style: italic;
+            color: var(--wood-deep);
+        }
+
+        .hero-sub {
+            font-size: 18px;
+            line-height: 1.62;
+            color: var(--ink-2);
+            max-width: 46ch;
+            margin: 0 auto 2.5rem;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 0.9rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* --- BUTTONS --- */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: var(--font-mono);
+            font-size: 12.5px;
+            letter-spacing: 0.3px;
+            padding: 0.7rem 1.4rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--ink);
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.18s, color 0.18s, transform 0.18s;
+        }
+        .btn svg { width: 15px; height: 15px; }
+
+        .btn-primary {
+            background: var(--ink);
+            color: var(--paper);
+        }
+        .btn-primary:hover {
+            background: transparent;
+            color: var(--ink);
+            transform: translateY(-1px);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--ink);
+        }
+        .btn-ghost:hover {
+            background: var(--ink);
+            color: var(--paper);
+        }
+
+        /* --- DIVIDER LINE --- */
+        .divider {
+            max-width: var(--maxw);
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        .divider-line {
+            height: 1px;
+            background: var(--rule);
+        }
+
+        /* --- DEMO --- */
+        .demo {
+            max-width: var(--maxw);
+            margin: 0 auto;
+            padding: 5rem 2rem;
+        }
+        .demo-inner {
+            display: flex;
+            align-items: center;
+            gap: 3rem;
+            background: var(--room);
+            border: 1px solid var(--rule);
+            border-radius: var(--radius-card);
+            padding: 2.5rem;
+            box-shadow: var(--shadow-frame);
+        }
+        .demo-icon {
+            flex-shrink: 0;
+            width: 56px; height: 56px;
+            border-radius: var(--radius-lg);
+            background: color-mix(in oklab, var(--wood) 20%, transparent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--wood-deep);
+        }
+        .demo-icon svg { width: 24px; height: 24px; }
+        .demo-body { flex: 1; }
+        .demo-body h3 {
+            font-family: var(--font-sans);
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: -0.4px;
+            color: var(--ink);
+            margin-bottom: 0.5rem;
+        }
+        .demo-body p {
+            font-size: 14.5px;
+            color: var(--ink-2);
+            line-height: 1.6;
+        }
+        .demo-action { flex-shrink: 0; }
+        .demo-action .btn { white-space: nowrap; }
+
+        /* --- SECTION HEADERS --- */
+        .section-label {
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            color: var(--wood-deep);
+            margin-bottom: 0.85rem;
+        }
+        .section-heading {
+            text-align: center;
+            font-family: var(--font-sans);
+            font-size: clamp(1.8rem, 3.4vw, 2.4rem);
+            font-weight: 600;
+            color: var(--ink);
+            letter-spacing: -1px;
+            line-height: 1.1;
+            margin-bottom: 3.5rem;
+        }
+
+        /* --- STEPS --- */
+        .steps-section {
+            max-width: var(--maxw);
+            margin: 0 auto;
+            padding: 5rem 2rem;
+        }
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            border: 1px solid var(--rule);
+            border-radius: var(--radius-card);
+            overflow: hidden;
+        }
+        .step {
+            padding: 2.75rem 2.25rem;
+        }
+        .step + .step { border-left: 1px solid var(--rule); }
+        .step-num {
+            font-family: var(--font-sans);
+            font-size: 2.6rem;
+            font-weight: 600;
+            line-height: 1;
+            letter-spacing: -1px;
+            color: var(--wood-deep);
+            margin-bottom: 1.1rem;
+        }
+        .step-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px; height: 42px;
+            border-radius: var(--radius-lg);
+            background: color-mix(in oklab, var(--wood) 18%, transparent);
+            color: var(--wood-deep);
+            margin-bottom: 1.4rem;
+        }
+        .step-icon svg { width: 18px; height: 18px; }
+        .step h3 {
+            font-family: var(--font-sans);
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: var(--ink);
+            letter-spacing: -0.4px;
+            margin-bottom: 0.6rem;
+        }
+        .step p {
+            font-size: 14.5px;
+            color: var(--ink-2);
+            line-height: 1.6;
+        }
+
+        /* --- FEATURES --- */
+        .features-section {
+            max-width: var(--maxw);
+            margin: 0 auto;
+            padding: 2rem 2rem 6rem;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            border: 1px solid var(--rule);
+            border-radius: var(--radius-card);
+            overflow: hidden;
+        }
+        .feat {
+            text-align: center;
+            padding: 2.25rem 1.5rem;
+        }
+        .feat + .feat { border-left: 1px solid var(--rule); }
+        .feat-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px; height: 40px;
+            border-radius: var(--radius-lg);
+            background: color-mix(in oklab, var(--wood) 16%, transparent);
+            color: var(--wood-deep);
+            margin-bottom: 1rem;
+        }
+        .feat-icon svg { width: 18px; height: 18px; }
+        .feat h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--ink);
+            margin-bottom: 0.4rem;
+        }
+        .feat p {
+            font-size: 13px;
+            color: var(--ink-3);
+            line-height: 1.55;
+        }
+
+
+        /* --- FOOTER --- */
+        footer {
+            max-width: var(--maxw);
+            margin: 0 auto;
+            padding: 2.5rem 2rem 3rem;
+            border-top: 1px solid var(--rule);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .footer-brand { display: flex; align-items: center; gap: 11px; }
+        .footer-brand .mk { width: 24px; height: 24px; }
+        footer span {
+            font-family: var(--font-mono);
+            font-size: 11.5px;
+            letter-spacing: 0.4px;
+            color: var(--ink-3);
+        }
+        footer span a { color: var(--ink-2); text-decoration: none; transition: color 0.15s; }
+        footer span a:hover { color: var(--ink); }
+        .footer-links { display: flex; gap: 1.75rem; }
+        .footer-links a {
+            font-size: 13.5px;
+            color: var(--ink-2);
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+        .footer-links a:hover { color: var(--ink); }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 768px) {
+            .hero { padding: 5rem 1.5rem 3rem; }
+            .steps { grid-template-columns: 1fr; }
+            .step + .step { border-left: none; border-top: 1px solid var(--rule); }
+            .features-grid { grid-template-columns: repeat(2, 1fr); }
+            .feat:nth-child(n+3) { border-top: 1px solid var(--rule); }
+            .feat:nth-child(3) { border-left: none; }
+            .demo-inner { flex-direction: column; text-align: center; gap: 1.5rem; padding: 2rem; }
+            .demo-action { width: 100%; }
+            .demo-action .btn { width: 100%; justify-content: center; }
+            footer { flex-direction: column; gap: 1.25rem; text-align: center; }
+        }
+        @media (max-width: 480px) {
+            .features-grid { grid-template-columns: 1fr; }
+            .feat + .feat { border-left: none; border-top: 1px solid var(--rule); }
+            .hero-actions { flex-direction: column; align-items: center; }
+            .hero-actions .btn { width: 100%; justify-content: center; max-width: 280px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Canonical "open threshold" mark (openvgal-meta/reference/OpenVGal Logo v2.html), defined once, reused via <use>. -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+        <symbol id="ovg-mark" viewBox="0 0 256 256">
+            <polygon points="35.84,35.84 220.16,35.84 161.18,87.14 94.82,87.14" fill="oklch(0.985 0.004 80)"/>
+            <polygon points="35.84,35.84 94.82,87.14 94.82,153.5 35.84,220.16" fill="oklch(0.995 0.002 80)"/>
+            <polygon points="220.16,35.84 161.18,87.14 161.18,153.5 220.16,220.16" fill="oklch(0.995 0.002 80)"/>
+            <polygon points="35.84,220.16 220.16,220.16 161.18,153.5 94.82,153.5" fill="oklch(0.78 0.065 68)"/>
+            <rect x="94.82" y="87.14" width="66.36" height="66.36" fill="oklch(0.985 0.004 80)"/>
+            <line x1="35.84" y1="35.84" x2="94.82" y2="87.14" stroke="oklch(0.16 0.01 270)" stroke-width="4.84"/>
+            <line x1="220.16" y1="35.84" x2="161.18" y2="87.14" stroke="oklch(0.16 0.01 270)" stroke-width="4.84"/>
+            <line x1="35.84" y1="220.16" x2="94.82" y2="153.5" stroke="oklch(0.16 0.01 270)" stroke-width="4.84"/>
+            <line x1="220.16" y1="220.16" x2="161.18" y2="153.5" stroke="oklch(0.16 0.01 270)" stroke-width="4.84"/>
+            <rect x="94.82" y="87.14" width="66.36" height="66.36" fill="none" stroke="oklch(0.16 0.01 270)" stroke-width="5.76"/>
+            <rect x="35.84" y="35.84" width="184.32" height="184.32" fill="none" stroke="oklch(0.16 0.01 270)" stroke-width="6.91"/>
+        </symbol>
+    </svg>
+
+    <div class="content">
+        <nav>
+            <a href="/" class="brand">
+                <svg class="mk" viewBox="0 0 256 256"><use href="#ovg-mark"/></svg>
+                <span class="word">OpenVGal</span>
+            </a>
+            <div class="nav-links">
+                <a href="https://github.com/lbartworks/openvgal">GitHub</a>
+                <a href="/create/" class="nav-cta">Create Gallery</a>
+            </div>
+        </nav>
+
+        <section class="hero">
+            <div class="hero-badge">
+                <span class="hero-badge-dot"></span>
+                v4.2.3 &middot; Open source &middot; Free forever
+            </div>
+            <h1>
+                Own your <span class="gradient-text">art</span>
+            </h1>
+            <p class="hero-sub">
+                Build immersive 3D virtual galleries from your images.
+                No accounts, no subscriptions &mdash; just your work in a
+                WebGL environment you fully control.
+            </p>
+            <div class="hero-actions">
+                <a href="/create/" class="btn btn-primary">
+                    Start creating
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </a>
+                <a href="https://nostromophoto.com/virtual/virtual.html" class="btn btn-ghost" target="_blank" rel="noopener noreferrer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    View live demo
+                </a>
+            </div>
+        </section>
+
+        <div class="divider"><div class="divider-line"></div></div>
+
+        <section class="demo">
+            <div class="demo-inner">
+                <div class="demo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 9h20M9 21V9"/></svg>
+                </div>
+                <div class="demo-body">
+                    <h3>See it in action</h3>
+                    <p>Walk through a real 3D gallery built with OpenVGAL &mdash; navigate rooms, examine artwork up close, and see what your own gallery could look like.</p>
+                </div>
+                <div class="demo-action">
+                    <a href="https://nostromophoto.com/virtual/virtual.html" class="btn btn-ghost" target="_blank" rel="noopener noreferrer">
+                        Enter gallery
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="steps-section">
+            <div class="section-label">How it works</div>
+            <h2 class="section-heading">From images to gallery in minutes</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">01</div>
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    </div>
+                    <h3>Upload your images</h3>
+                    <p>Drop folders of artwork into the browser-based generator. Each folder becomes a separate room in your virtual gallery.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">02</div>
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    </div>
+                    <h3>Generate the 3D space</h3>
+                    <p>One click builds rooms, lighting, frames, and navigation. The entire 3D environment is configured automatically.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">03</div>
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                    </div>
+                    <h3>Download &amp; deploy</h3>
+                    <p>Get a ready-to-host ZIP. Upload to any web server &mdash; static files only, no backend or database required.</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="divider"><div class="divider-line"></div></div>
+
+        <section class="features-section" style="padding-top: 5rem;">
+            <div class="section-label">Built for artists</div>
+            <h2 class="section-heading" style="margin-bottom: 2.5rem;">Everything you need, nothing you don't</h2>
+            <div class="features-grid">
+                <div class="feat">
+                    <div class="feat-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <h4>You own it</h4>
+                    <p>No platform lock-in. Your gallery is yours to host anywhere.</p>
+                </div>
+                <div class="feat">
+                    <div class="feat-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10A15.3 15.3 0 0112 2z"/></svg>
+                    </div>
+                    <h4>Static hosting</h4>
+                    <p>Plain HTML files. Any web server, CDN, or shared hosting works.</p>
+                </div>
+                <div class="feat">
+                    <div class="feat-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    </div>
+                    <h4>Real-time 3D</h4>
+                    <p>Babylon.js engine with PBR materials and dynamic lighting.</p>
+                </div>
+                <div class="feat">
+                    <div class="feat-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></svg>
+                    </div>
+                    <h4>Open source</h4>
+                    <p>MIT licensed. Inspect, fork, or contribute. Free forever.</p>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <div class="footer-brand">
+                <svg class="mk" viewBox="0 0 256 256"><use href="#ovg-mark"/></svg>
+                <span>OpenVGAL by <a href="https://nostromophoto.com">LB Artworks</a></span>
+            </div>
+            <div class="footer-links">
+                <a href="https://github.com/lbartworks/openvgal">GitHub</a>
+                <a href="/create/">Create</a>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

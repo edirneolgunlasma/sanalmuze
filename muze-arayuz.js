@@ -194,11 +194,28 @@
 
   function sergiHazir(s) {
     $('eom-giris-sayi').textContent = s.toplam + ' eser · ' + s.odalar.length + ' koleksiyon';
-    $('eom-atolyeler').replaceChildren(...s.odalar.map((o) => {
+    // Satırlar dengeli dolsun (7 koleksiyon → 4 + 3), telefonda en çok 3 sütun
+    const liste = $('eom-atolyeler');
+    const n = s.odalar.length;
+    const sutun = Math.ceil(n / Math.ceil(n / 5));
+    liste.style.setProperty('--sutun', sutun);
+    liste.style.setProperty('--sutun-dar', Math.min(sutun, 3));
+    liste.replaceChildren(...s.odalar.map((o) => {
       const li = el('li');
       const b = el('button');
       b.type = 'button';
-      b.append(document.createTextNode(o.ad), el('small', '', String(o.sayi)));
+      const kapak = el('span', 'eom-kapak');
+      if (o.kapak) {
+        const img = el('img');
+        img.alt = '';
+        img.decoding = 'async';
+        img.onerror = () => img.remove();
+        img.src = o.kapak;
+        kapak.append(img);
+      }
+      const metin = el('span', 'eom-kart-metin');
+      metin.append(el('span', 'eom-kart-ad', o.ad), el('small', '', o.sayi + ' eser'));
+      b.append(kapak, metin);
       b.addEventListener('click', () => salonaGit(o.ad));
       li.append(b);
       return li;
@@ -230,9 +247,9 @@
       sonSalon = ad;
       paneliKapat();
       $('eom-salon-tanitim').hidden = true;
-      const s = sergi();
-      const sayi = s && s.eserler[ad] ? Object.keys(s.eserler[ad]).length : 0;
-      $('eom-oda-adi').textContent = salonAdi(ad) + (sayi ? ' · ' + sayi + ' eser' : '');
+      // Giriş salonundaki vitrin eserleri koleksiyonlardan seçkidir; sayı yalnızca koleksiyon salonunda
+      const salon = salonBilgisi(ad);
+      $('eom-oda-adi').textContent = salonAdi(ad) + (salon ? ' · ' + salon.sayi + ' eser' : '');
       bekleyenTanitim = ad;
     }
     if (bekleyenTanitim && bekleyenTanitim === ad && !document.getElementById('loader')) {

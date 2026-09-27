@@ -104,6 +104,12 @@
 		}
 
 		const json = JSON.parse(text);
+		// Sanal müze: giriş tabelasının yazısı (logo.png maskesi) açık gri yerine altın yaldız.
+		// BJS_glow_masked yalnızca giriş salonu tabelalarında kullanılır.
+		if (name === 'rBJS_glow_masked') {
+			const renk = (json.blocks || []).find((b) => b.name === 'color' && b.customType === 'BABYLON.InputBlock');
+			if (renk) renk.value = [0.96, 0.8, 0.5, 1];
+		}
 		const mat = BABYLON.NodeMaterial.Parse(json, scene, materials_folder + '/');
 		mat.name = name;
 		return mat;

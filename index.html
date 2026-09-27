@@ -430,6 +430,10 @@
 	-->
 	<script src="https://unpkg.com/earcut@2.1.1/dist/earcut.min.js"></script>
     <link rel="stylesheet" href="overlay.css">
+    <!-- Giriş başlığı: Cinzel (kitabe harfleri) + Cormorant Garamond italik; yüklenemezse serif yedeği -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Cormorant+Garamond:ital,wght@1,500&display=swap">
     <link rel="stylesheet" href="muze-arayuz.css">
 
 	<script>
@@ -528,6 +532,7 @@
   
   	<div id="loader">
 	  <div class="loader-card">
+		<div class="eom-kurum-logo eom-yukleyici-logo" role="img" aria-label="Olgunlaşma Enstitüleri Edirne logosu"></div>
 		<p class="eom-ust-baslik">Edirne Olgunlaşma Enstitüsü · Sanal Müze</p>
 		<p id="eom-yukleme-durum" role="status">Sergi hazırlanıyor…</p>
 		<p>Salon</p>
@@ -713,52 +718,16 @@
     <!-- Sanal müze arayüzü (muze-arayuz.js) -->
     <div id="eom-giris" hidden role="dialog" aria-modal="true" aria-labelledby="eom-giris-baslik">
       <div class="eom-giris-kart">
-        <svg class="eom-selimiye" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 128" fill="currentColor" role="img" aria-label="Edirne Selimiye Camii silueti">
-          <defs>
-            <g id="eom-minare">
-              <rect x="-2.2" y="22" width="4.4" height="96"/>
-              <rect x="-4.6" y="44" width="9.2" height="2.2" rx="0.8"/>
-              <rect x="-4.6" y="60" width="9.2" height="2.2" rx="0.8"/>
-              <rect x="-4.6" y="76" width="9.2" height="2.2" rx="0.8"/>
-              <polygon points="-3,22.6 3,22.6 0,5"/>
-              <rect x="-0.4" y="0.5" width="0.8" height="5"/>
-            </g>
-            <mask id="eom-pencere">
-              <rect width="320" height="128" fill="#fff"/>
-              <g fill="#000">
-                <path d="M131 86v-4a2 2 0 0 1 4 0v4z M141 86v-4a2 2 0 0 1 4 0v4z M151 86v-4a2 2 0 0 1 4 0v4z M165 86v-4a2 2 0 0 1 4 0v4z M175 86v-4a2 2 0 0 1 4 0v4z M185 86v-4a2 2 0 0 1 4 0v4z"/>
-                <path d="M116 112v-6a2.5 2.5 0 0 1 5 0v6z M130 112v-6a2.5 2.5 0 0 1 5 0v6z M144 112v-6a2.5 2.5 0 0 1 5 0v6z M171 112v-6a2.5 2.5 0 0 1 5 0v6z M185 112v-6a2.5 2.5 0 0 1 5 0v6z M199 112v-6a2.5 2.5 0 0 1 5 0v6z"/>
-                <path d="M156 118v-11a4 4 0 0 1 8 0v11z"/>
-              </g>
-            </mask>
-          </defs>
-          <use href="#eom-minare" x="72"/>
-          <use href="#eom-minare" x="94"/>
-          <use href="#eom-minare" x="226"/>
-          <use href="#eom-minare" x="248"/>
-          <g mask="url(#eom-pencere)">
-            <rect x="104" y="98" width="112" height="20"/>
-            <rect x="109" y="93" width="102" height="6" rx="1.5"/>
-            <rect x="124" y="78" width="72" height="16"/>
-            <path d="M118 79 C118 58, 138 47, 160 47 C182 47, 202 58, 202 79 Z"/>
-          </g>
-          <rect x="114" y="82" width="8" height="12"/>
-          <path d="M114 82.5a4 4 0 0 1 8 0z"/>
-          <rect x="198" y="82" width="8" height="12"/>
-          <path d="M198 82.5a4 4 0 0 1 8 0z"/>
-          <path d="M105 93.5a6 5 0 0 1 12 0z"/>
-          <path d="M203 93.5a6 5 0 0 1 12 0z"/>
-          <rect x="159.3" y="36" width="1.4" height="12"/>
-          <circle cx="160" cy="36.5" r="1.9"/>
-          <rect x="44" y="118" width="232" height="2" rx="1"/>
-        </svg>
-        <p class="eom-ust-baslik">Edirne · Sanal Müze</p>
-        <h1 id="eom-giris-baslik">Edirne Olgunlaşma Enstitüsü<span>Sanal Müzesi</span></h1>
+        <div class="eom-kurum-logo" role="img" aria-label="Olgunlaşma Enstitüleri Edirne logosu"></div>
+        <h1 id="eom-giris-baslik" class="eom-giris-baslik">
+          <span class="eom-baslik-kurum"><span>Edirne Olgunlaşma</span> <span>Enstitüsü</span></span>
+          <span class="eom-baslik-muze">Sanal Müzesi</span>
+        </h1>
         <div class="eom-lale-bolucu"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-16 -14 32 30" fill="currentColor" aria-hidden="true">  <path d="M0-13C4.5-8.5 5.2-2.5 0 4C-5.2-2.5-4.5-8.5 0-13Z"/>  <path d="M0 4C-8 2.5-11-5-8-11.5C-6.2-5.5-3.6-1.4 0 4Z"/>  <path d="M0 4C8 2.5 11-5 8-11.5C6.2-5.5 3.6-1.4 0 4Z"/>  <rect x="-0.6" y="3.5" width="1.2" height="11"/>  <path d="M0 12C-3 8-7 7.5-10 8.5C-7 10.5-3.5 11.5 0 12Z"/>  <path d="M0 10C3 6.5 7 6 10 7C7 9 3.5 10 0 10Z"/></svg></div>
         <p class="eom-giris-metin">Selimiye'nin şehrinde, enstitümüzün atölyelerinde ustalarımızın elinden çıkan eserleri üç boyutlu salonlarda gezin. Her koleksiyonun kendi salonu var; salonlara giriş salonundaki kapılardan geçilir. Bir esere tıkladığınızda adı, ölçüsü, hikayesi ve büyük görseli açılır.</p>
         <p class="eom-giris-sayi" id="eom-giris-sayi"></p>
         <ul class="eom-atolyeler" id="eom-atolyeler" aria-label="Koleksiyon salonları"></ul>
-        <button class="eom-dugme" id="eom-giris-kapat" type="button">Müzeyi Gez</button>
+        <div class="eom-giris-eylem"><button class="eom-dugme" id="eom-giris-kapat" type="button">Müzeyi Gez</button></div>
       </div>
     </div>
 

@@ -9,6 +9,9 @@
 //
 // Görüntüleyici (openvgal-viewer.js) window.eomSergiHazirla() tanımlıysa
 // building_v2.json yerine onu bekler.
+//
+// Giriş salonu boş kalmaz: her koleksiyon kapısının iki yanında o koleksiyonun ilk
+// iki eseri asılır, kullanılmayan kapı nişlerine de koleksiyonlardan birer eser konur.
 (function () {
   'use strict';
 
@@ -18,6 +21,32 @@
   const OLCU_ONBELLEK = 'eom-gorsel-olculeri-v1';
   const OLCU_ZAMAN_ASIMI = 15000;
   const API_ZAMAN_ASIMI = 60000;   // Apps Script soğuk açılışta 10+ sn sürebilir
+  const SAHNE_M_CM = 2.5 / 120;    // room_builder_aux.js SCENE_M_PER_CM ile aynı
+
+  // Giriş salonu şablonu (classic → T_root_B.glb) ölçüleri; tarayıcıda ışın atılarak
+  // ölçüldü. Salon on yüzlüdür: k. yüzün ortasında d_k kapısı durur ve yüzün yönü
+  // (Babylon XZ düzleminde) 144° + 36°·k'dir. Duvar yüzeyi merkezden 14.626 m, kapı
+  // nişinin arka yüzü 14.382 m uzaktadır. Başka şablonda vitrin kurulmaz.
+  const GIRIS_VITRINI = {
+    sablon: 'T_root_B.glb',
+    yuzSayisi: 10,
+    ilkAci: 144,
+    adim: 36,
+    duvar: 14.626,
+    nis: 14.382,
+    // Kapının iki yanı: kapı ortasından ±3.1 m, göz hizası (granit çerçeve ±1.7 m'de biter)
+    yan: { uzaklik: 3.1, yukseklik: 1.9, enFazlaGenislik: 1.7, enFazlaYukseklik: 1.7 },
+    // Boş niş: 2.08 × 2.8 m'lik açıklığa çerçevesiyle sığar
+    nisEseri: { yukseklik: 1.6, enFazlaGenislik: 1.3, enFazlaYukseklik: 1.6 }
+  };
+
+  // Giriş salonunda kapı, kapı nişi sayısından azsa kapılar salona eşit aralıkla
+  // dağıtılır (5 koleksiyon → 0, 2, 4, 6, 8. nişler). room_builder_aux.js kapıları
+  // bu sırayla yerleştirir; vitrin de aynı işlevle boş nişleri bulur.
+  window.eomKapiYuvalari = function (kapiSayisi, yuvaSayisi) {
+    if (kapiSayisi >= yuvaSayisi) return Array.from({ length: yuvaSayisi }, (_, i) => i);
+    return Array.from({ length: kapiSayisi }, (_, i) => Math.floor(i * yuvaSayisi / kapiSayisi));
+  };
 
   // Eser görselleri mutlak adres: declarations.js'in yerel öneki ('.' + adres) bozmasın.
   const yerelAdres = window.resolveImageUrl;
@@ -162,6 +191,66 @@
     return /^(root(#\d+)?|technical)$/i.test(ad) ? ad + ' Koleksiyonu' : ad;
   }
 
+  // Görsel oranını koruyarak metre cinsinden kutuya sığdırır; ölçüyü cm döndürür.
+  function kutuyaSigdir(o, enFazlaGenislik, enFazlaYukseklik) {
+    const oran = o.w / o.h;
+    let g = enFazlaGenislik;
+    let y = g / oran;
+    if (y > enFazlaYukseklik) { y = enFazlaYukseklik; g = y * oran; }
+    return { wCm: g / SAHNE_M_CM, hCm: y / SAHNE_M_CM };
+  }
+
+  // Giriş salonu vitrini. Koleksiyon kapısının solunda koleksiyonun ilk, sağında ikinci
+  // eseri durur (sunucu öne çıkanları başa dizer). Boş nişlere koleksiyonlardan sırayla,
+  // henüz asılmamış birer eser konur. ◀ ▶ gezintisi ziyaretçinin ilk baktığı yüzden
+  // (d_9) başlayıp salonu sağa doğru dolaşır.
+  function girisVitriniKur(bina, odalar, olcu, eserAs) {
+    const V = GIRIS_VITRINI;
+    const kapilar = Object.keys(bina).filter((ad) => bina[ad].parent === 'root');
+    const yuvalar = window.eomKapiYuvalari(kapilar.length, V.yuzSayisi);
+    const yuzler = new Array(V.yuzSayisi).fill(null);   // yüz → koleksiyon, 'kapi' (Ana Salon 2) ya da boş
+    kapilar.forEach((ad, i) => {
+      if (yuvalar[i] !== undefined) yuzler[yuvalar[i]] = odalar.find((o) => o.ad === ad) || 'kapi';
+    });
+
+    const yerlesim = [];
+    const asilan = new Set();
+    yuzler.forEach((oda, yuz) => {
+      if (!oda || oda === 'kapi') return;
+      oda.eserler.slice(0, 2).forEach((e, j) => {
+        asilan.add(e);
+        yerlesim.push({ yuz: yuz, uzaklik: j === 0 ? -V.yan.uzaklik : V.yan.uzaklik, eser: e, nis: false });
+      });
+    });
+    const kuyruklar = odalar.map((o) => o.eserler.filter((e) => !asilan.has(e)));
+    let siradaki = 0;
+    yuzler.forEach((oda, yuz) => {
+      if (oda) return;
+      for (let d = 0; d < kuyruklar.length; d++) {
+        const k = (siradaki + d) % kuyruklar.length;
+        if (!kuyruklar[k].length) continue;
+        yerlesim.push({ yuz: yuz, uzaklik: 0, eser: kuyruklar[k].shift(), nis: true });
+        siradaki = k + 1;
+        return;
+      }
+    });
+
+    // Yüz açısı azaldıkça ziyaretçinin sağına dönülür; yüz içinde soldan sağa.
+    yerlesim.sort((a, b) => b.yuz - a.yuz || a.uzaklik - b.uzaklik);
+    for (const y of yerlesim) {
+      const aci = (V.ilkAci + V.adim * y.yuz) * Math.PI / 180;
+      const merkez = y.nis ? V.nis : V.duvar;
+      const normal = [-Math.cos(aci), -Math.sin(aci)];
+      const boyunca = [-normal[1], normal[0]];      // duvara bakana göre sağ (placeItems ile aynı)
+      const kutu = y.nis ? V.nisEseri : V.yan;
+      eserAs('root', y.eser, kutuyaSigdir(olcu.get(y.eser), kutu.enFazlaGenislik, kutu.enFazlaYukseklik), [
+        merkez * Math.cos(aci) + boyunca[0] * y.uzaklik,
+        merkez * Math.sin(aci) + boyunca[1] * y.uzaklik,
+        kutu.yukseklik
+      ], normal);
+    }
+  }
+
   async function sergiyiKur() {
     const dil = dilSec();
     durum('Eserler enstitü envanterinden alınıyor…');
@@ -220,6 +309,20 @@
     const eserHaritasi = {};
     const salonlar = [];
     let sira = 0;
+    // konum: [x, z, göz hizası y] duvar yüzeyinde; yon: duvarın salona bakan normali [x, z]
+    function eserAs(salonAdi, e, cm, konum, yon) {
+      bina[salonAdi][e.envanterNo] = {
+        resource: dokuAdresi(e.gorseller[0]),
+        resource_type: 'image',
+        width: cm.wCm.toFixed(2),
+        height: cm.hCm.toFixed(2),
+        location: '[' + konum.map((x) => x.toFixed(3)).join(',') + ']',
+        vector: '[' + yon[0].toFixed(4) + ',' + yon[1].toFixed(4) + ']',
+        metadata: 'ID #' + (sira++) + ' ' + etiket(e)
+      };
+      (eserHaritasi[salonAdi] = eserHaritasi[salonAdi] || {})[e.envanterNo] = e;
+    }
+
     for (const oda of odalar) {
       const ogeler = oda.eserler.map((e) => {
         const o = olcu.get(e);
@@ -231,27 +334,18 @@
       yerlesim.forEach((salon, n) => {
         const ad = n === 0 ? oda.ad : oda.ad + ' ' + (n + 1);
         bina[ad] = { parent: ebeveyn, resource: 'eom-salon.glb', template: salon.glbName };
-        eserHaritasi[ad] = {};
         salon.indices.forEach((indeks, k) => {
           const oge = ogeler[indeks];
-          const e = oge.eser;
-          const konum = salon.positions[k];
-          const yon = salon.vectors[k];
-          bina[ad][e.envanterNo] = {
-            resource: dokuAdresi(e.gorseller[0]),
-            resource_type: 'image',
-            width: oge.cmWidth.toFixed(2),
-            height: oge.cmHeight.toFixed(2),
-            location: '[' + konum.map((x) => x.toFixed(3)).join(',') + ']',
-            vector: '[' + yon[0].toFixed(1) + ',' + yon[1].toFixed(1) + ']',
-            metadata: 'ID #' + (sira++) + ' ' + etiket(e)
-          };
-          eserHaritasi[ad][e.envanterNo] = e;
+          eserAs(ad, oge.eser, { wCm: oge.cmWidth, hCm: oge.cmHeight }, salon.positions[k], salon.vectors[k]);
         });
         salonlar.push({ ad: ad, koleksiyon: oda.ad, bolum: n + 1, sayi: salon.indices.length, aciklama: oda.aciklama });
         ebeveyn = ad;
       });
     }
+
+    // Vitrin, hangi nişin kapı olacağını salonların giriş salonuna bağlanma sırasından
+    // çıkarır; bu yüzden bütün salonlar bina'ya eklendikten sonra kurulur.
+    if (girisSablonu === GIRIS_VITRINI.sablon) girisVitriniKur(bina, odalar, olcu, eserAs);
 
     for (const ad of Object.keys(bina)) {
       const ebeveyn = bina[ad].parent;
@@ -269,7 +363,11 @@
     window.EOM_SERGI = {
       dil: dil,
       toplam: eserler.length,
-      odalar: odalar.map((o) => ({ ad: o.ad, sayi: o.eserler.length, aciklama: o.aciklama })),
+      // kapak: giriş kartındaki koleksiyon kartının görseli (koleksiyonun ilk eseri)
+      odalar: odalar.map((o) => {
+        const g = o.eserler[0].gorseller[0];
+        return { ad: o.ad, sayi: o.eserler.length, aciklama: o.aciklama, kapak: g.kucuk || g.buyuk || g.tamBoy };
+      }),
       salonlar: salonlar,
       eserler: eserHaritasi,
       baslik: eserBasligi

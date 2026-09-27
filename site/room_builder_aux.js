@@ -413,9 +413,20 @@ function populate_template(config_file, room_name,scene){
 	
 	//locate doors in the json file
 	var renamed_doors=0;
+	var placed_doors=0;
 	dict_items=Object.keys(gallery).filter(key => gallery[key]["resource_type"]== "door");
 	max_doors=dict_items.length;
-	
+
+	// Sanal müze: giriş salonunda kapılar ilk nişlere yığılmaz, salona eşit aralıkla
+	// dağılır (entegre.js eomKapiYuvalari; vitrin boş nişleri aynı işlevle bulur).
+	// Yuva → kapı sırası; yuvası olmayan niş boş kalır.
+	var door_slots = scene.meshes.filter((mesh) => regul_exp_door.test(mesh.name)).length;
+	var slot_door = {};
+	var slots = (/^root(#\d+)?$/.test(room_name) && typeof window.eomKapiYuvalari === 'function')
+		? window.eomKapiYuvalari(max_doors, door_slots)
+		: dict_items.map((_, i) => i);
+	slots.forEach((slot, i) => { slot_door[slot] = i; });
+
 	//go through the mesh check for doors and replace materials
 	scene.meshes.map((mesh) => {
 
@@ -425,25 +436,26 @@ function populate_template(config_file, room_name,scene){
 			mesh.material=BJS_materials[temp_name];
 			mesh.alwaysSelectAsActiveMesh=true;
 		}
-		
+
 		if (regul_exp_door.test(mesh.name)){
-			if (renamed_doors >= max_doors){ //delete the door from the mesh
+			var door_idx = slot_door[renamed_doors];
+			if (door_idx === undefined){ //delete the door from the mesh
 				mesh.name="dummydoor" + renamed_doors;
-								
+
 			} else {
-				mesh.name="d_" + dict_items[renamed_doors] + "_" + renamed_doors;
+				mesh.name="d_" + dict_items[door_idx] + "_" + renamed_doors;
 				normals = mesh.getVerticesData(BABYLON.VertexBuffer.NormalKind);
 				normal = new BABYLON.Vector3(normals[0], normals[1], normals[2]);
 
 				//put text
-				text3D_builder(dict_items[renamed_doors].replace("#", " "), mesh.position, normal, mesh.parent, scene);
-				
+				text3D_builder(dict_items[door_idx].replace("#", " "), mesh.position, normal, mesh.parent, scene);
+				placed_doors++;
 			}
 			renamed_doors++;
 		}
 	});
-	
-	if (renamed_doors < max_doors){
+
+	if (placed_doors < max_doors){
 		console.log("ERROR: Some doors in the json are not present in the template");
 	}
 

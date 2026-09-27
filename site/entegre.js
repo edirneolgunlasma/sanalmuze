@@ -9,9 +9,6 @@
 //
 // Görüntüleyici (openvgal-viewer.js) window.eomSergiHazirla() tanımlıysa
 // building_v2.json yerine onu bekler.
-//
-// Giriş salonunun duvarlarına eser asılmaz; yalnızca kullanılmayan kapı nişlerine
-// koleksiyonlardan birer eser konur.
 (function () {
   'use strict';
 
@@ -21,25 +18,10 @@
   const OLCU_ONBELLEK = 'eom-gorsel-olculeri-v1';
   const OLCU_ZAMAN_ASIMI = 15000;
   const API_ZAMAN_ASIMI = 60000;   // Apps Script soğuk açılışta 10+ sn sürebilir
-  const SAHNE_M_CM = 2.5 / 120;    // room_builder_aux.js SCENE_M_PER_CM ile aynı
-
-  // Giriş salonu şablonu (classic → T_root_B.glb) ölçüleri; tarayıcıda ışın atılarak
-  // ölçüldü. Salon on yüzlüdür: k. yüzün ortasında d_k kapısı durur ve yüzün yönü
-  // (Babylon XZ düzleminde) 144° + 36°·k'dir. Kapı nişinin arka yüzü merkezden
-  // 14.382 m uzaktadır. Başka şablonda vitrin kurulmaz.
-  const GIRIS_VITRINI = {
-    sablon: 'T_root_B.glb',
-    yuzSayisi: 10,
-    ilkAci: 144,
-    adim: 36,
-    nis: 14.382,
-    // Niş açıklığı 2.08 × 2.8 m; eser çerçevesiyle sığar
-    nisEseri: { yukseklik: 1.6, enFazlaGenislik: 1.3, enFazlaYukseklik: 1.6 }
-  };
 
   // Giriş salonunda kapı, kapı nişi sayısından azsa kapılar salona eşit aralıkla
-  // dağıtılır (5 koleksiyon → 0, 2, 4, 6, 8. nişler). room_builder_aux.js kapıları
-  // bu sırayla yerleştirir; vitrin de aynı işlevle boş nişleri bulur.
+  // dağıtılır (5 koleksiyon → 0, 2, 4, 6, 8. nişler); room_builder_aux.js kapıları
+  // bu sırayla yerleştirir. Giriş salonuna eser konmaz (kullanıcı isteği).
   window.eomKapiYuvalari = function (kapiSayisi, yuvaSayisi) {
     if (kapiSayisi >= yuvaSayisi) return Array.from({ length: yuvaSayisi }, (_, i) => i);
     return Array.from({ length: kapiSayisi }, (_, i) => Math.floor(i * yuvaSayisi / kapiSayisi));
@@ -188,44 +170,15 @@
     return /^(root(#\d+)?|technical)$/i.test(ad) ? ad + ' Koleksiyonu' : ad;
   }
 
-  // Görsel oranını koruyarak metre cinsinden kutuya sığdırır; ölçüyü cm döndürür.
-  function kutuyaSigdir(o, enFazlaGenislik, enFazlaYukseklik) {
-    const oran = o.w / o.h;
-    let g = enFazlaGenislik;
-    let y = g / oran;
-    if (y > enFazlaYukseklik) { y = enFazlaYukseklik; g = y * oran; }
-    return { wCm: g / SAHNE_M_CM, hCm: y / SAHNE_M_CM };
-  }
-
-  // Giriş salonu vitrini: duvarlar boş kalır, kapısı olmayan her nişe koleksiyonlardan
-  // sırayla birer eser konur (her koleksiyonun önce ilk eseri; sunucu öne çıkanları başa
-  // dizer). ◀ ▶ gezintisi ziyaretçinin ilk baktığı yüzden (d_9) başlayıp sağa dolaşır.
-  function girisVitriniKur(bina, odalar, olcu, eserAs) {
-    const V = GIRIS_VITRINI;
-    const kapiSayisi = Object.keys(bina).filter((ad) => bina[ad].parent === 'root').length;
-    const kapili = new Set(window.eomKapiYuvalari(kapiSayisi, V.yuzSayisi));
-    const kuyruklar = odalar.map((o) => o.eserler.slice());
-    const yerlesim = [];
-    let siradaki = 0;
-    for (let yuz = 0; yuz < V.yuzSayisi; yuz++) {
-      if (kapili.has(yuz)) continue;
-      for (let d = 0; d < kuyruklar.length; d++) {
-        const k = (siradaki + d) % kuyruklar.length;
-        if (!kuyruklar[k].length) continue;
-        yerlesim.push({ yuz: yuz, eser: kuyruklar[k].shift() });
-        siradaki = k + 1;
-        break;
-      }
-    }
-
-    // Yüz açısı azaldıkça ziyaretçinin sağına dönülür.
-    yerlesim.sort((a, b) => b.yuz - a.yuz);
-    const kutu = V.nisEseri;
-    for (const y of yerlesim) {
-      const aci = (V.ilkAci + V.adim * y.yuz) * Math.PI / 180;
-      eserAs('root', y.eser, kutuyaSigdir(olcu.get(y.eser), kutu.enFazlaGenislik, kutu.enFazlaYukseklik),
-        [V.nis * Math.cos(aci), V.nis * Math.sin(aci), kutu.yukseklik], [-Math.cos(aci), -Math.sin(aci)]);
-    }
+  // Duvar etiketleri tuvale çizilir (room_builder_aux.js plaque_builder); yazı tipi inmeden
+  // çizilen etiket Georgia'ya düşer. Google Fonts Türkçe harfleri ayrı alt kümede verdiği için
+  // eser adlarının kendisi örnek metin olarak verilir. Yavaş bağlantıda sergiyi bekletmez.
+  function etiketYaziTipi(ornek) {
+    if (!document.fonts || !document.fonts.load) return Promise.resolve();
+    return Promise.race([
+      document.fonts.load('600 64px "Cormorant Garamond"', ornek || 'AaŞşĞğİı').catch(() => {}),
+      new Promise((coz) => setTimeout(coz, 4000))
+    ]);
   }
 
   async function sergiyiKur() {
@@ -320,10 +273,6 @@
       });
     }
 
-    // Vitrin, hangi nişin kapı olacağını salonların giriş salonuna bağlanma sırasından
-    // çıkarır; bu yüzden bütün salonlar bina'ya eklendikten sonra kurulur.
-    if (girisSablonu === GIRIS_VITRINI.sablon) girisVitriniKur(bina, odalar, olcu, eserAs);
-
     for (const ad of Object.keys(bina)) {
       const ebeveyn = bina[ad].parent;
       if (ebeveyn && ebeveyn !== 'none') {
@@ -351,6 +300,7 @@
     };
     document.dispatchEvent(new CustomEvent('eom:sergi-hazir', { detail: window.EOM_SERGI }));
     durum('Giriş salonu hazırlanıyor…');
+    await etiketYaziTipi(eserler.map(etiket).join(' '));
     return bina;
   }
 

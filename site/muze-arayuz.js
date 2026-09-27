@@ -247,9 +247,10 @@
       sonSalon = ad;
       paneliKapat();
       $('eom-salon-tanitim').hidden = true;
-      // Giriş salonundaki vitrin eserleri koleksiyonlardan seçkidir; sayı yalnızca koleksiyon salonunda
+      // Eser sayısı yalnızca koleksiyon salonunda; giriş salonunda eser yok
       const salon = salonBilgisi(ad);
       $('eom-oda-adi').textContent = salonAdi(ad) + (salon ? ' · ' + salon.sayi + ' eser' : '');
+      document.body.dataset.salon = /^root(#\d+)?$/.test(ad) ? 'giris' : 'koleksiyon';
       bekleyenTanitim = ad;
     }
     if (bekleyenTanitim && bekleyenTanitim === ad && !document.getElementById('loader')) {

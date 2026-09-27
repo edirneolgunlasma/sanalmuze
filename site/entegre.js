@@ -10,8 +10,8 @@
 // Görüntüleyici (openvgal-viewer.js) window.eomSergiHazirla() tanımlıysa
 // building_v2.json yerine onu bekler.
 //
-// Giriş salonu boş kalmaz: her koleksiyon kapısının iki yanında o koleksiyonun ilk
-// iki eseri asılır, kullanılmayan kapı nişlerine de koleksiyonlardan birer eser konur.
+// Giriş salonunun duvarlarına eser asılmaz; yalnızca kullanılmayan kapı nişlerine
+// koleksiyonlardan birer eser konur.
 (function () {
   'use strict';
 
@@ -25,18 +25,15 @@
 
   // Giriş salonu şablonu (classic → T_root_B.glb) ölçüleri; tarayıcıda ışın atılarak
   // ölçüldü. Salon on yüzlüdür: k. yüzün ortasında d_k kapısı durur ve yüzün yönü
-  // (Babylon XZ düzleminde) 144° + 36°·k'dir. Duvar yüzeyi merkezden 14.626 m, kapı
-  // nişinin arka yüzü 14.382 m uzaktadır. Başka şablonda vitrin kurulmaz.
+  // (Babylon XZ düzleminde) 144° + 36°·k'dir. Kapı nişinin arka yüzü merkezden
+  // 14.382 m uzaktadır. Başka şablonda vitrin kurulmaz.
   const GIRIS_VITRINI = {
     sablon: 'T_root_B.glb',
     yuzSayisi: 10,
     ilkAci: 144,
     adim: 36,
-    duvar: 14.626,
     nis: 14.382,
-    // Kapının iki yanı: kapı ortasından ±3.1 m, göz hizası (granit çerçeve ±1.7 m'de biter)
-    yan: { uzaklik: 3.1, yukseklik: 1.9, enFazlaGenislik: 1.7, enFazlaYukseklik: 1.7 },
-    // Boş niş: 2.08 × 2.8 m'lik açıklığa çerçevesiyle sığar
+    // Niş açıklığı 2.08 × 2.8 m; eser çerçevesiyle sığar
     nisEseri: { yukseklik: 1.6, enFazlaGenislik: 1.3, enFazlaYukseklik: 1.6 }
   };
 
@@ -200,54 +197,34 @@
     return { wCm: g / SAHNE_M_CM, hCm: y / SAHNE_M_CM };
   }
 
-  // Giriş salonu vitrini. Koleksiyon kapısının solunda koleksiyonun ilk, sağında ikinci
-  // eseri durur (sunucu öne çıkanları başa dizer). Boş nişlere koleksiyonlardan sırayla,
-  // henüz asılmamış birer eser konur. ◀ ▶ gezintisi ziyaretçinin ilk baktığı yüzden
-  // (d_9) başlayıp salonu sağa doğru dolaşır.
+  // Giriş salonu vitrini: duvarlar boş kalır, kapısı olmayan her nişe koleksiyonlardan
+  // sırayla birer eser konur (her koleksiyonun önce ilk eseri; sunucu öne çıkanları başa
+  // dizer). ◀ ▶ gezintisi ziyaretçinin ilk baktığı yüzden (d_9) başlayıp sağa dolaşır.
   function girisVitriniKur(bina, odalar, olcu, eserAs) {
     const V = GIRIS_VITRINI;
-    const kapilar = Object.keys(bina).filter((ad) => bina[ad].parent === 'root');
-    const yuvalar = window.eomKapiYuvalari(kapilar.length, V.yuzSayisi);
-    const yuzler = new Array(V.yuzSayisi).fill(null);   // yüz → koleksiyon, 'kapi' (Ana Salon 2) ya da boş
-    kapilar.forEach((ad, i) => {
-      if (yuvalar[i] !== undefined) yuzler[yuvalar[i]] = odalar.find((o) => o.ad === ad) || 'kapi';
-    });
-
+    const kapiSayisi = Object.keys(bina).filter((ad) => bina[ad].parent === 'root').length;
+    const kapili = new Set(window.eomKapiYuvalari(kapiSayisi, V.yuzSayisi));
+    const kuyruklar = odalar.map((o) => o.eserler.slice());
     const yerlesim = [];
-    const asilan = new Set();
-    yuzler.forEach((oda, yuz) => {
-      if (!oda || oda === 'kapi') return;
-      oda.eserler.slice(0, 2).forEach((e, j) => {
-        asilan.add(e);
-        yerlesim.push({ yuz: yuz, uzaklik: j === 0 ? -V.yan.uzaklik : V.yan.uzaklik, eser: e, nis: false });
-      });
-    });
-    const kuyruklar = odalar.map((o) => o.eserler.filter((e) => !asilan.has(e)));
     let siradaki = 0;
-    yuzler.forEach((oda, yuz) => {
-      if (oda) return;
+    for (let yuz = 0; yuz < V.yuzSayisi; yuz++) {
+      if (kapili.has(yuz)) continue;
       for (let d = 0; d < kuyruklar.length; d++) {
         const k = (siradaki + d) % kuyruklar.length;
         if (!kuyruklar[k].length) continue;
-        yerlesim.push({ yuz: yuz, uzaklik: 0, eser: kuyruklar[k].shift(), nis: true });
+        yerlesim.push({ yuz: yuz, eser: kuyruklar[k].shift() });
         siradaki = k + 1;
-        return;
+        break;
       }
-    });
+    }
 
-    // Yüz açısı azaldıkça ziyaretçinin sağına dönülür; yüz içinde soldan sağa.
-    yerlesim.sort((a, b) => b.yuz - a.yuz || a.uzaklik - b.uzaklik);
+    // Yüz açısı azaldıkça ziyaretçinin sağına dönülür.
+    yerlesim.sort((a, b) => b.yuz - a.yuz);
+    const kutu = V.nisEseri;
     for (const y of yerlesim) {
       const aci = (V.ilkAci + V.adim * y.yuz) * Math.PI / 180;
-      const merkez = y.nis ? V.nis : V.duvar;
-      const normal = [-Math.cos(aci), -Math.sin(aci)];
-      const boyunca = [-normal[1], normal[0]];      // duvara bakana göre sağ (placeItems ile aynı)
-      const kutu = y.nis ? V.nisEseri : V.yan;
-      eserAs('root', y.eser, kutuyaSigdir(olcu.get(y.eser), kutu.enFazlaGenislik, kutu.enFazlaYukseklik), [
-        merkez * Math.cos(aci) + boyunca[0] * y.uzaklik,
-        merkez * Math.sin(aci) + boyunca[1] * y.uzaklik,
-        kutu.yukseklik
-      ], normal);
+      eserAs('root', y.eser, kutuyaSigdir(olcu.get(y.eser), kutu.enFazlaGenislik, kutu.enFazlaYukseklik),
+        [V.nis * Math.cos(aci), V.nis * Math.sin(aci), kutu.yukseklik], [-Math.cos(aci), -Math.sin(aci)]);
     }
   }
 

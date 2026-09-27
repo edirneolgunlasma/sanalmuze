@@ -538,8 +538,122 @@
 }
 .eom-hata-kart p:not(.eom-ust-baslik) { margin: 0 0 1.4rem; line-height: 1.6; color: var(--eom-soluk); }
 
+/* --- Alt gezinme paneli ve yardım penceresi (overlay.html): müze paletine uyarlanır --- */
+#permanent-overlay {
+  width: min(860px, calc(100% - 32px));
+  padding: 0.75rem 1.1rem 0.5rem;
+  background: rgba(14, 11, 8, 0.82);
+  border: 1px solid var(--eom-cizgi);
+  border-radius: 16px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-family: var(--eom-sans);
+  color: var(--eom-metin);
+}
+#permanent-overlay .overlay-section {
+  padding: 0 1.1rem;
+  border-right-color: var(--eom-cizgi);
+}
+#permanent-overlay .overlay-section > p:first-child {
+  margin: 0 0 0.45rem;
+  font: 600 0.64rem/1 var(--eom-sans);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--eom-altin);
+}
+/* Eser adı alanı: panelin en geniş bölümü, etiketle aynı serif */
+#permanent-overlay #artwork-section { flex: 1.7 1 0; min-width: 0; }
+#artwork-info {
+  margin: 0;
+  max-width: 100%;
+  font-family: "Cormorant Garamond", var(--eom-serif);
+  font-weight: 600;
+  font-size: 1.32rem;
+  line-height: 1.12;
+  color: var(--eom-metin);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+#artwork-info:empty::before {
+  content: "Bir eser seçin";
+  font-style: italic;
+  font-weight: 500;
+  font-size: 1.08rem;
+  color: var(--eom-soluk);
+}
+/* Giriş salonunda eser yok: ziyaretçi kapılara yönlendirilir (muze-arayuz.js body[data-salon]) */
+body[data-salon="giris"] #artwork-info:empty::before { content: "Bir koleksiyon kapısına tıklayın"; }
+#permanent-overlay .nav-button,
+#permanent-overlay .help-button,
+#help-popup .lang-button,
+#help-popup .close-button {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--eom-cizgi);
+  border-radius: 999px;
+  color: var(--eom-metin);
+  font-family: var(--eom-sans);
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+#permanent-overlay .nav-button { min-width: 42px; height: 36px; font-size: 13px; }
+#permanent-overlay .help-button { padding: 0.5rem 1.15rem; font-size: 0.85rem; font-weight: 500; }
+#permanent-overlay .nav-button:hover,
+#permanent-overlay .help-button:hover,
+#help-popup .lang-button:hover,
+#help-popup .close-button:hover,
+#help-popup .lang-button.active {
+  border-color: var(--eom-altin);
+  background: rgba(201, 164, 92, 0.15);
+  color: var(--eom-altin-acik);
+}
+#permanent-overlay .nav-button:focus-visible,
+#permanent-overlay .help-button:focus-visible { outline: 2px solid var(--eom-altin-acik); outline-offset: 2px; }
+#permanent-overlay .cinematic-button.active {
+  border-color: var(--eom-altin);
+  background: rgba(201, 164, 92, 0.26);
+  box-shadow: 0 0 10px rgba(201, 164, 92, 0.35);
+}
+/* overlay.html'deki satır içi stilin üzerine */
+#help-section label { color: var(--eom-soluk) !important; font-size: 0.72rem !important; }
+#overlay-attribution {
+  margin-top: 0.55rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid rgba(201, 164, 92, 0.12);
+  font-size: 0.62rem;
+  color: rgba(185, 173, 154, 0.62);
+}
+#overlay-attribution:hover { color: var(--eom-soluk); }
+#help-popup {
+  background: rgba(20, 17, 13, 0.97);
+  border: 1px solid var(--eom-cizgi);
+  border-radius: 16px;
+  box-shadow: var(--eom-golge);
+  color: var(--eom-metin);
+  font-family: var(--eom-sans);
+}
+#help-popup .help-content { color: #ddd3c3; }
+
 /* --- Telefon: panel alttan açılan sayfa olur --- */
 @media (max-width: 700px) {
+  #permanent-overlay { width: calc(100% - 16px); bottom: 8px; padding: 0.55rem 0.4rem 0.4rem; border-radius: 14px; }
+  #permanent-overlay .overlay-section { padding: 0 0.5rem; }
+  /* Eser adı kendi satırında, tam genişlikte; gezinme ve yardım altında yan yana */
+  #permanent-overlay #artwork-section {
+    flex: 0 0 100%;
+    flex-direction: row;
+    justify-content: center;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 0.5rem;
+    padding: 0 0.5rem 0.5rem;
+    border-right: none;
+    border-bottom: 1px solid var(--eom-cizgi);
+  }
+  #permanent-overlay #artwork-section > p:first-child { margin: 0; flex: 0 0 auto; }
+  #artwork-info { font-size: 1.08rem; -webkit-line-clamp: 1; min-width: 0; }
+  #artwork-info:empty::before { font-size: 0.95rem; }
   #eom-oda-rozeti { top: 12px; left: 64px; padding: 0.4rem 0.75rem; }
   #eom-oda-rozeti strong { font-size: 0.95rem; }
   #eom-salon-tanitim { top: 70px; }

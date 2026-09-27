@@ -94,36 +94,45 @@ function plaqueSatirlari(ctx, metin, maxPx, maxSatir) {
 	return satirlar;
 }
 
+// Etiketin üstündeki küçük lale (giriş kartındaki bölücüyle aynı çizim; viewBox -16 -14 32 30)
+var PLAQUE_LALE = 'M0-13C4.5-8.5 5.2-2.5 0 4C-5.2-2.5-4.5-8.5 0-13Z' +
+	'M0 4C-8 2.5-11-5-8-11.5C-6.2-5.5-3.6-1.4 0 4Z M0 4C8 2.5 11-5 8-11.5C6.2-5.5 3.6-1.4 0 4Z' +
+	'M-0.6 3.5h1.2v11h-1.2Z M0 12C-3 8-7 7.5-10 8.5C-7 10.5-3.5 11.5 0 12Z M0 10C3 6.5 7 6 10 7C7 9 3.5 10 0 10Z';
+
 var plaque_builder = function(name, item_position, item_size, vector, metadata, scene) {
-	// Müze etiketi: eserin altında, açık renkli bir kart üzerinde eser adı.
+	// Müze etiketi: fildişi zemin, ince altın çift çerçeve, üstte küçük altın lale, koyu
+	// kahve serif eser adı (giriş kartıyla aynı dil). Yazı tipi (Cormorant Garamond) entegre.js'te
+	// sergi kurulurken önceden indirilir; inmediyse Georgia'ya düşer.
 	// metadata biçimi: "ID #N Başlık\nAlt satır" — ID öneki gösterilmez, alt satır isteğe bağlı.
 	var plaqueText = metadata.replace(/^ID\s*#\d+\s*/, '');
 	if (!plaqueText.trim()) return;
 	var lines = plaqueText.split('\n');
 	var titleText = (lines[0] || '').trim();
-	var subtitleText = (lines[1] || '').trim();
+	var subtitleText = (lines[1] || '').trim().toLocaleUpperCase('tr');
 
 	// Doku çözünürlüğü (piksel/metre). Dokunmatik cihazda bellek için daha düşük.
 	var PX_M = (typeof isTouchDevice !== 'undefined' && isTouchDevice) ? 480 : 900;
-	var padX = 0.07, padY = 0.05, lineH = 0.085;           // metre
-	var minW = 0.7, maxW = Math.max(0.9, Math.min(item_size.width * 0.95, 1.6));
-	var titleFont = '600 ' + Math.round(0.058 * PX_M) + 'px Georgia, "Times New Roman", serif';
-	var subFont = 'italic ' + Math.round(0.04 * PX_M) + 'px Georgia, "Times New Roman", serif';
+	var px = function(m) { return m * PX_M; };
+	var padX = 0.1, padTop = 0.052, padBottom = 0.06, lineH = 0.098;  // metre
+	var ornH = 0.036, ornGap = 0.014;                                    // lale ve altındaki boşluk
+	var minW = 0.72, maxW = Math.max(0.9, Math.min(item_size.width * 0.95, 1.6));
+	var titleFont = '600 ' + Math.round(px(0.088)) + 'px "Cormorant Garamond", Georgia, "Times New Roman", serif';
+	var subFont = '600 ' + Math.round(px(0.028)) + 'px system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
 
 	var olcum = plaque_builder._olcum || (plaque_builder._olcum = document.createElement('canvas').getContext('2d'));
 	olcum.font = titleFont;
-	var satirlar = plaqueSatirlari(olcum, titleText, (maxW - 2 * padX) * PX_M, 2);
+	var satirlar = plaqueSatirlari(olcum, titleText, px(maxW - 2 * padX), 2);
 	var metinPx = 0;
 	for (var i = 0; i < satirlar.length; i++) metinPx = Math.max(metinPx, olcum.measureText(satirlar[i]).width);
 	if (subtitleText) {
 		olcum.font = subFont;
-		metinPx = Math.max(metinPx, Math.min(olcum.measureText(subtitleText).width, (maxW - 2 * padX) * PX_M));
+		metinPx = Math.max(metinPx, Math.min(olcum.measureText(subtitleText).width, px(maxW - 2 * padX)));
 	}
 
 	var plaqueW = Math.min(maxW, Math.max(minW, metinPx / PX_M + 2 * padX));
-	var plaqueH = 2 * padY + satirlar.length * lineH + (subtitleText ? lineH * 0.75 : 0);
-	var texW = Math.round(plaqueW * PX_M);
-	var texH = Math.round(plaqueH * PX_M);
+	var plaqueH = padTop + ornH + ornGap + satirlar.length * lineH + (subtitleText ? lineH * 0.6 : 0) + padBottom;
+	var texW = Math.round(px(plaqueW));
+	var texH = Math.round(px(plaqueH));
 
 	// Mipmap: uzaktan bakınca yazı titremesin (NPOT doku WebGL2 ister)
 	var mip = scene.getEngine().webGLVersion > 1;
@@ -131,28 +140,57 @@ var plaque_builder = function(name, item_position, item_size, vector, metadata, 
 	dynTex.anisotropicFilteringLevel = 8;
 	var ctx = dynTex.getContext();
 
-	// Kart: sıcak kırık beyaz zemin, ince çerçeve
-	ctx.fillStyle = '#f5f0e6';
+	// Zemin: sıcak fildişi, aşağı doğru hafif koyulaşır; alt kenardaki ince gölge levhaya kalınlık verir
+	var zemin = ctx.createLinearGradient(0, 0, 0, texH);
+	zemin.addColorStop(0, '#faf6ee');
+	zemin.addColorStop(1, '#eee6d6');
+	ctx.fillStyle = zemin;
 	ctx.fillRect(0, 0, texW, texH);
-	var cizgi = Math.max(1, Math.round(PX_M * 0.004));
-	ctx.strokeStyle = 'rgba(120, 98, 64, 0.45)';
-	ctx.lineWidth = cizgi;
-	ctx.strokeRect(cizgi / 2, cizgi / 2, texW - cizgi, texH - cizgi);
+	ctx.fillStyle = 'rgba(90, 70, 40, 0.18)';
+	ctx.fillRect(0, texH - Math.max(1, Math.round(px(0.004))), texW, Math.max(1, Math.round(px(0.004))));
 
-	// Eser adı: koyu kahve, ortalı, serif
-	ctx.fillStyle = '#2a231b';
+	// Dış altın çizgi, içte soluk ikinci çizgi (Edirnekâri pano çerçevesi)
+	var dis = Math.max(1, Math.round(px(0.005)));
+	ctx.strokeStyle = '#b8924c';
+	ctx.lineWidth = dis;
+	ctx.strokeRect(dis / 2, dis / 2, texW - dis, texH - dis);
+	var ic = px(0.017), ince = Math.max(1, Math.round(px(0.0018)));
+	ctx.strokeStyle = 'rgba(184, 146, 76, 0.5)';
+	ctx.lineWidth = ince;
+	ctx.strokeRect(ic, ic, texW - 2 * ic, texH - 2 * ic);
+
+	// Lale ve iki yanında kısa altın çizgiler
+	var ornY = px(padTop + ornH / 2);
+	var olcek = px(ornH) / 30;
+	ctx.save();
+	ctx.translate(texW / 2, ornY - olcek);
+	ctx.scale(olcek, olcek);
+	ctx.fillStyle = '#b08a45';
+	ctx.fill(new Path2D(PLAQUE_LALE));
+	ctx.restore();
+	var kol = px(0.075), bosluk = px(0.03);
+	ctx.strokeStyle = 'rgba(176, 138, 69, 0.85)';
+	ctx.lineWidth = ince;
+	ctx.beginPath();
+	ctx.moveTo(texW / 2 - bosluk - kol, ornY); ctx.lineTo(texW / 2 - bosluk, ornY);
+	ctx.moveTo(texW / 2 + bosluk, ornY); ctx.lineTo(texW / 2 + bosluk + kol, ornY);
+	ctx.stroke();
+
+	// Eser adı: koyu kahve, ortalı
+	ctx.fillStyle = '#2a2119';
 	ctx.textAlign = 'center';
 	ctx.textBaseline = 'middle';
 	ctx.font = titleFont;
-	var y = padY * PX_M + lineH * PX_M / 2;
+	var y = px(padTop + ornH + ornGap + lineH / 2);
 	for (var j = 0; j < satirlar.length; j++) {
-		ctx.fillText(satirlar[j], texW / 2, y, texW - 2 * padX * PX_M);
-		y += lineH * PX_M;
+		ctx.fillText(satirlar[j], texW / 2, y, texW - px(2 * padX));
+		y += px(lineH);
 	}
 	if (subtitleText) {
 		ctx.font = subFont;
-		ctx.fillStyle = '#6b5d4b';
-		ctx.fillText(subtitleText, texW / 2, y - lineH * PX_M * 0.1, texW - 2 * padX * PX_M);
+		ctx.fillStyle = '#8a6a33';
+		if ('letterSpacing' in ctx) ctx.letterSpacing = Math.round(px(0.004)) + 'px';
+		ctx.fillText(subtitleText, texW / 2, y - px(lineH * 0.25), texW - px(2 * padX));
 	}
 	dynTex.update();
 
@@ -173,10 +211,11 @@ var plaque_builder = function(name, item_position, item_size, vector, metadata, 
 	}, scene);
 
 	// Position: centered below frame
-	var plaqueOffsetDown = (item_size.height / 2 + margin / 2 + plaqueH / 2 + 0.03);
+	var plaqueOffsetDown = (item_size.height / 2 + margin / 2 + plaqueH / 2 + 0.05);
 
+	// Duvardan 2 cm önde: yandan bakınca havada durmasın, duvarla da çakışmasın
 	plaquePlane.position = new BABYLON.Vector3(item_position.x, item_position.y, item_position.z)
-		.add(vector.scale(3 * item_separation / 2))
+		.add(vector.scale(0.02))
 		.subtract(new BABYLON.Vector3(0, plaqueOffsetDown, 0));
 
 	plaquePlane.material = plaqueMat;

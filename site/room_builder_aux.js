@@ -9,11 +9,46 @@ async function  doDownload(filename, scene) {
 }
 
 
-var text3D_builder=function(name, item_position, vector, parent, scene){
+// Kapı yazısı (Babylon CreateText): 1 birim = 1 m. Büyük harf yüksekliği ~0,14 m.
+var KAPI_YAZI_BOYU=0.2, KAPI_YAZI_SATIR=0.3, KAPI_YAZI_EN_COK_SATIR=3, KAPI_YAZI_GENISLIK_ORANI=0.8;
+var KAPI_YAZI_ISTENEN_OLCEK=0.8;   // bundan çok küçülecekse bir satır daha denenir
+
+// Yazıyı kapıya en okunaklı sığacak biçimde satırlara böler: en az satırla istenen ölçeğe
+// ulaşılıyorsa o, ulaşılamıyorsa en büyük ölçek. Döner: { satirlar, olcek }
+function kapiYazisiDuzeni(metin, azamiGenislik, font){
+	var genislik=function(y){
+		return Array.from(y).reduce(function(t, ch){
+			var g=font.glyphs[ch] || font.glyphs["?"];
+			return t + (g ? g.ha : 0);
+		}, 0) * KAPI_YAZI_BOYU / font.resolution;
+	};
+	var kelimeler=metin.split(/\s+/).filter(Boolean);
+	var enIyiBolme=function(n){   // n satırda en geniş satırı en dar olan bölme
+		var sonuc=null;
+		(function dene(bas, kalan, satirlar){
+			if (kalan===1){
+				var tam=satirlar.concat(kelimeler.slice(bas).join(" "));
+				var en=Math.max.apply(null, tam.map(genislik));
+				if (!sonuc || en<sonuc.en) sonuc={ satirlar:tam, en:en };
+				return;
+			}
+			for (var i=bas+1; i<=kelimeler.length-kalan+1; i++) dene(i, kalan-1, satirlar.concat(kelimeler.slice(bas, i).join(" ")));
+		})(0, n, []);
+		return { satirlar:sonuc.satirlar, olcek:Math.min(1, azamiGenislik/sonuc.en) };
+	};
+	var secilen=null;
+	for (var n=1; n<=Math.min(KAPI_YAZI_EN_COK_SATIR, kelimeler.length); n++){
+		var aday=enIyiBolme(n);
+		if (!secilen || aday.olcek>secilen.olcek) secilen=aday;
+		if (secilen.olcek>=KAPI_YAZI_ISTENEN_OLCEK) break;
+	}
+	return secilen || { satirlar:[metin], olcek:1 };
+}
+
+var text3D_builder=function(name, item_position, vector, parent, scene, kapiGenisligi){
 	const north_vector=new BABYLON.Vector3(0, 0, 1);
-	maxLength=1.3;
-	
-	texto=name.replace(/d_(.+)_\d+/, "$1");
+
+	var texto=name.replace(/d_(.+)_\d+/, "$1");
 	// Giriş salonları: "root" → "Ana Salon", zincirlenen "root 1" → "Ana Salon 2"
 	texto=texto.replace(/^root(?:[ #](\d+))?$/, function(m, n){ return n ? "Ana Salon " + (Number(n) + 1) : "Ana Salon"; });
 	// 3B yazı tipinde ş, ğ, İ gibi harflerin glifi yok; eksik harf temel harfine düşer (ş→s)
@@ -23,31 +58,23 @@ var text3D_builder=function(name, item_position, vector, parent, scene){
 		return fontContent.glyphs[temel] ? temel : ch;
 	}).join("");
 
-	myText = BABYLON.MeshBuilder.CreateText("T_" + texto, texto, fontContent, {
-		size: 0.2,
-		resolution: 5, 
-		depth: 0.1,
-		sideOrientation:2 }, scene);
+	var duzen=kapiYazisiDuzeni(texto, (kapiGenisligi || 1.6) * KAPI_YAZI_GENISLIK_ORANI, fontContent);
 
-	//scale it
-	scene.executeWhenReady(function () {
-		// Assuming the text is aligned along the X axis, measure its length
-		myText.refreshBoundingInfo();
-		var boundingInfo = myText.getBoundingInfo();
-		var textWidth = boundingInfo.maximum.x - boundingInfo.minimum.x;
-
-		// Check if the text exceeds the maximum length
-		if (textWidth > maxLength) {
-			// Calculate the required scaling factor
-			var scaleFactor = maxLength / textWidth;
-
-			// Apply the scaling factor to the text mesh
-			myText.scaling.x = scaleFactor;
-			myText.scaling.y = scaleFactor; // Optional: Scale uniformly in Y to maintain aspect ratio
-			// Note: Adjust Z scaling as needed, or leave it if uniform scaling is desired
-		}
+	// Her satır ayrı kurulup ortalanır (CreateText "\n" ile satırları sola yaslar), sonra tek ağ olur.
+	var satirlar=duzen.satirlar.map(function(satir, i){
+		var m=BABYLON.MeshBuilder.CreateText("T_" + texto, satir, fontContent, {
+			size: KAPI_YAZI_BOYU,
+			resolution: 5,
+			depth: 0.02,
+			sideOrientation:2 }, scene);
+		m.position.y=((duzen.satirlar.length - 1) / 2 - i) * KAPI_YAZI_SATIR;
+		return m;
 	});
-	
+	var myText=satirlar.length > 1 ? BABYLON.Mesh.MergeMeshes(satirlar, true, true) : satirlar[0];
+	myText.name="T_" + texto;
+	myText.scaling.x=duzen.olcek;
+	myText.scaling.y=duzen.olcek;
+
 	//place it
 	myText.parent=parent;
 	myText.position=new BABYLON.Vector3(item_position.x, item_position.y, item_position.z);
@@ -456,8 +483,8 @@ function populate_template(config_file, room_name,scene){
 	dict_items=Object.keys(gallery).filter(key => gallery[key]["resource_type"]== "door");
 	max_doors=dict_items.length;
 
-	// Sanal müze: giriş salonunda kapılar ilk nişlere yığılmaz, salona eşit aralıkla
-	// dağılır (entegre.js eomKapiYuvalari; vitrin boş nişleri aynı işlevle bulur).
+	// Sanal müze: giriş salonunda kapılar girişin karşısına, arada boş niş kalmadan
+	// yan yana dizilir (entegre.js eomKapiYuvalari).
 	// Yuva → kapı sırası; yuvası olmayan niş boş kalır.
 	var door_slots = scene.meshes.filter((mesh) => regul_exp_door.test(mesh.name)).length;
 	var slot_door = {};
@@ -487,7 +514,8 @@ function populate_template(config_file, room_name,scene){
 				normal = new BABYLON.Vector3(normals[0], normals[1], normals[2]);
 
 				//put text
-				text3D_builder(dict_items[door_idx].replace("#", " "), mesh.position, normal, mesh.parent, scene);
+				var kapi_olcu = mesh.getBoundingInfo().boundingBox.extendSize;
+				text3D_builder(dict_items[door_idx].replace("#", " "), mesh.position, normal, mesh.parent, scene, 2 * Math.hypot(kapi_olcu.x, kapi_olcu.z));
 				placed_doors++;
 			}
 			renamed_doors++;

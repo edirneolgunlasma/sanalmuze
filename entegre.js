@@ -19,12 +19,16 @@
   const OLCU_ZAMAN_ASIMI = 15000;
   const API_ZAMAN_ASIMI = 60000;   // Apps Script soğuk açılışta 10+ sn sürebilir
 
-  // Giriş salonunda kapı, kapı nişi sayısından azsa kapılar salona eşit aralıkla
-  // dağıtılır (5 koleksiyon → 0, 2, 4, 6, 8. nişler); room_builder_aux.js kapıları
-  // bu sırayla yerleştirir. Giriş salonuna eser konmaz (kullanıcı isteği).
+  // Giriş salonunda kapılar arada boş niş kalmadan yan yana dizilir; room_builder_aux.js
+  // kapıları bu sırayla yerleştirir. Giriş salonuna eser konmaz (kullanıcı isteği).
+  // 10 nişli şablonlarda (classic, dark) nişler salonun çevresinde sırayla durur ve numara
+  // arttıkça ziyaretçinin sağından soluna gider; d_8 ve d_9 girişin tam karşısındadır.
+  // Kapılar bu ikisine ortalanır, ilk koleksiyon en solda olur (3 kapı → 0, 9, 8. nişler).
   window.eomKapiYuvalari = function (kapiSayisi, yuvaSayisi) {
-    if (kapiSayisi >= yuvaSayisi) return Array.from({ length: yuvaSayisi }, (_, i) => i);
-    return Array.from({ length: kapiSayisi }, (_, i) => Math.floor(i * yuvaSayisi / kapiSayisi));
+    const adet = Math.min(kapiSayisi, yuvaSayisi);
+    if (yuvaSayisi !== 10) return Array.from({ length: adet }, (_, i) => i);
+    const enSol = Math.ceil(8.5 + (adet - 1) / 2);
+    return Array.from({ length: adet }, (_, i) => (enSol - i) % yuvaSayisi);
   };
 
   // Eser görselleri mutlak adres: declarations.js'in yerel öneki ('.' + adres) bozmasın.
